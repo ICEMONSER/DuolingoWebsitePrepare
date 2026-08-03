@@ -106,6 +106,25 @@
   }.result-hero .score{font-size:52px;font-weight:900;color:var(--green-dark);}.result-hero .label{color:var(--ink-light);font-weight:700;}.review-item{border:2px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px;}.review-item.ok{border-color:var(--green);}.review-item.bad{border-color:var(--red);}.review-item .tag{
     display:inline-block;font-size:12px;font-weight:800;padding:3px 10px;border-radius:99px;margin-bottom:8px;
   }.review-item.ok .tag{background:#e5f8d3;color:var(--green-dark);}.review-item.bad .tag{background:#ffe9e9;color:var(--red);}.review-item .q{font-weight:700;margin-bottom:6px;}.review-item .ans{font-size:14px;color:var(--ink-light);}.review-item .ans b{color:var(--ink);}.result-actions{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;}
+  .review-item-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+  .explain-toggle{
+    background:none;border:none;cursor:pointer;flex-shrink:0;
+    display:flex;align-items:center;gap:4px;color:var(--red);font-weight:800;font-size:13px;
+    padding:4px 8px;border-radius:8px;
+  }
+  .explain-toggle:hover{background:#ffe9e9;}
+  .explain-arrow{display:inline-block;transition:transform .2s ease;font-size:12px;}
+  .explain-arrow.open{transform:rotate(180deg);}
+  .explain-box{
+    display:none;margin-top:10px;padding:12px 14px;background:#fff5f5;
+    border:2px dashed var(--red);border-radius:12px;font-size:13.5px;line-height:1.7;color:#7a2020;
+  }
+  .explain-box.show{display:block;}
+  .explain-box b{color:#5c1414;}
+  .explain-box .study-tag{
+    display:inline-block;margin-top:8px;font-size:12px;font-weight:800;
+    background:#ffd6d6;color:#a11f1f;padding:3px 10px;border-radius:99px;
+  }
 
   @media(max-width:640px){
     .step{padding:20px 16px 120px;}.menu{padding:20px 16px 60px;}.action-bar{padding:12px 16px;}
@@ -5370,6 +5389,7 @@ function stepInsertHTML(q){
     </div>
     <div class="choice-list">${choices}</div>
     <div class="action-bar">
+      <button class="btn btn-ghost" id="backBtn">← ย้อนกลับ</button>
       <button class="btn btn-primary" id="nextBtn" ${ans.insertChoice===null?'disabled':''}>ถัดไป</button>
     </div>
   `;
@@ -5400,6 +5420,7 @@ function stepHighlightHTML(q, stepNum){
       ${current ? `คุณเลือกไว้: <b>"${current}"</b>` : 'ยังไม่ได้เลือกข้อความ'}
     </div>
     <div class="action-bar">
+      <button class="btn btn-ghost" id="backBtn">← ย้อนกลับ</button>
       <button class="btn btn-primary" id="nextBtn" ${current?'':'disabled'}>ถัดไป</button>
     </div>
   `;
@@ -5420,6 +5441,7 @@ function stepMCHTML(q, kind){
     <div class="passage" style="max-height:220px;overflow:auto;">${passage}</div>
     <div class="choice-list">${choices}</div>
     <div class="action-bar">
+      <button class="btn btn-ghost" id="backBtn">← ย้อนกลับ</button>
       <button class="btn btn-primary" id="nextBtn" ${selected===null||selected===undefined?'disabled':''}>${isIdea?'ถัดไป':'ส่งคำตอบ'}</button>
     </div>
   `;
@@ -5431,6 +5453,10 @@ function stepMCHTML(q, kind){
 function wireStep(q){
   const ans = STATE.answers[q.id];
   const nextBtn = document.getElementById('nextBtn');
+  const backBtn = document.getElementById('backBtn');
+  if(backBtn){
+    backBtn.addEventListener('click', ()=>goPrevStep());
+  }
 
   if(STATE.step===1){
     document.querySelectorAll('.blank-btn').forEach(btn=>{
@@ -5536,6 +5562,12 @@ function goNextStep(){
     renderStep();
   }
 }
+function goPrevStep(){
+  if(STATE.step > 1){
+    STATE.step--;
+    renderStep();
+  }
+}
 
 /* ============================================================
    SCORING & RESULTS
@@ -5545,6 +5577,7 @@ function scoreQuestion(q, ans){
   q.part1.blanks.forEach((b,i)=>{
     const user = ans.blanks[i];
     items.push({
+      type:'blank',
       label:`Step 1 · ช่องว่างที่ ${i+1}`,
       correct: user===b.correct,
       userAnswer: user || '(ไม่ได้ตอบ)',
@@ -5553,6 +5586,7 @@ function scoreQuestion(q, ans){
   });
   const insertCorrectIdx = q.insertOptions.findIndex(o=>o.correct);
   items.push({
+    type:'insert',
     label:'Step 2 · ประโยคที่แทรก',
     correct: ans.insertChoice===insertCorrectIdx,
     userAnswer: ans.insertChoice!==null ? q.insertOptions[ans.insertChoice].text : '(ไม่ได้ตอบ)',
@@ -5561,6 +5595,7 @@ function scoreQuestion(q, ans){
   [ ['hl3',0,'Step 3'], ['hl4',1,'Step 4'] ].forEach(([key,qi,label])=>{
     const user = ans[key];
     items.push({
+      type:'highlight',
       label:`${label} · ${q.highlightQs[qi].question}`,
       correct: user ? isHighlightCorrect(user, q.highlightQs[qi].answer) : false,
       userAnswer: user || '(ไม่ได้เลือกข้อความ)',
@@ -5569,6 +5604,7 @@ function scoreQuestion(q, ans){
   });
   const ideaCorrectIdx = q.ideaOptions.findIndex(o=>o.correct);
   items.push({
+    type:'idea',
     label:'Step 5 · Main Idea',
     correct: ans.idea===ideaCorrectIdx,
     userAnswer: ans.idea!==null && ans.idea!==undefined ? q.ideaOptions[ans.idea].text : '(ไม่ได้ตอบ)',
@@ -5576,6 +5612,7 @@ function scoreQuestion(q, ans){
   });
   const titleCorrectIdx = q.titleOptions.findIndex(o=>o.correct);
   items.push({
+    type:'title',
     label:'Step 6 · Title',
     correct: ans.title===titleCorrectIdx,
     userAnswer: ans.title!==null && ans.title!==undefined ? q.titleOptions[ans.title].text : '(ไม่ได้ตอบ)',
@@ -5596,18 +5633,49 @@ function finishQuestion(){
   renderResult();
 }
 
+/* ---- Explanation generator for wrong answers ---- */
+function explainMistake(item, q){
+  const you = item.userAnswer;
+  const correct = item.correctAnswer;
+  switch(item.type){
+    case 'blank':
+      return `คุณเลือก “${you}” แต่คำที่เข้ากับบริบทของประโยคคือ “${correct}” — ลองอ่านประโยคก่อนและหลังช่องว่างให้ครบ เพื่อดูว่าความหมาย ไวยากรณ์ (part of speech) และคำที่มักใช้คู่กัน (collocation) บ่งบอกคำใด<br>
+      <span class="study-tag">ควรฝึกเพิ่ม: Vocabulary in Context &amp; Collocation</span>`;
+    case 'insert':
+      return `ประโยคที่คุณเลือกไม่ได้เชื่อมโยงเนื้อหาระหว่างสองย่อหน้าได้อย่างเป็นเหตุเป็นผล ในขณะที่ประโยคที่ถูกต้องช่วยเชื่อมใจความให้ต่อเนื่อง ลองสังเกต <b>คำเชื่อม</b> (however, therefore, in addition ฯลฯ) และดูว่าประโยคไหน “ขยายความ” หรือ “เชื่อมต่อ” เนื้อหาก่อนหน้าได้ดีที่สุด<br>
+      <span class="study-tag">ควรฝึกเพิ่ม: Cohesion &amp; Coherence (การเชื่อมโยงประโยค)</span>`;
+    case 'highlight':
+      return `ข้อความที่คุณไฮไลต์ไม่ตรงกับสิ่งที่คำถามถาม คำตอบที่ถูกต้องอยู่ที่ “${correct}” ลองอ่านคำถามให้ละเอียดก่อน แล้วค่อยกวาดสายตาหา keyword ที่ตรงกับคำถามในบทความ แทนที่จะเดาจากความจำ<br>
+      <span class="study-tag">ควรฝึกเพิ่ม: Scanning (การหาข้อมูลเฉพาะจุด)</span>`;
+    case 'idea':
+      return `คำตอบที่คุณเลือกน่าจะเป็นเพียง “รายละเอียดย่อย” (supporting detail) ของเรื่อง ไม่ใช่ใจความสำคัญที่ครอบคลุมทั้งบทความ ใจความสำคัญที่แท้จริงคือ “${correct}” ลองถามตัวเองว่า “ถ้าจะเล่าเรื่องนี้ให้คนอื่นฟังในประโยคเดียว จะพูดว่าอะไร”<br>
+      <span class="study-tag">ควรฝึกเพิ่ม: Main Idea vs. Supporting Details</span>`;
+    case 'title':
+      return `ชื่อเรื่องที่คุณเลือกอาจ “แคบเกินไป” (เจาะจงรายละเอียดเดียว) หรือ “กว้างเกินไป” จนไม่ครอบคลุมเนื้อหา ชื่อเรื่องที่เหมาะสมคือ “${correct}” เพราะสรุปแก่นของทั้งบทความได้ครบถ้วนแต่กระชับ<br>
+      <span class="study-tag">ควรฝึกเพิ่ม: Summarizing &amp; Title Selection</span>`;
+    default:
+      return '';
+  }
+}
+
 function renderResult(){
   const app=document.getElementById('app');
   const q = QUESTIONS[STATE.qIndex];
   const r = STATE.results[q.id];
   const roundedScore = Math.round(r.score);
 
-  const itemsHTML = r.items.map(it=>`
+  const itemsHTML = r.items.map((it,idx)=>`
     <div class="review-item ${it.correct?'ok':'bad'}">
-      <div class="tag">${it.correct?'ถูกต้อง':'ไม่ถูกต้อง'}</div>
-      <div class="q">${it.label}</div>
+      <div class="review-item-head">
+        <div>
+          <div class="tag">${it.correct?'ถูกต้อง':'ไม่ถูกต้อง'}</div>
+          <div class="q">${it.label}</div>
+        </div>
+        ${it.correct?'':`<button class="explain-toggle" data-idx="${idx}">อธิบาย <span class="explain-arrow" id="arrow-${idx}">▾</span></button>`}
+      </div>
       <div class="ans">คำตอบของคุณ: <b>${it.userAnswer}</b></div>
       ${it.correct?'':`<div class="ans">เฉลย: <b>${it.correctAnswer}</b></div>`}
+      ${it.correct?'':`<div class="explain-box" id="explain-${idx}">${explainMistake(it, q)}</div>`}
     </div>
   `).join('');
 
@@ -5634,6 +5702,15 @@ function renderResult(){
   const overallBtn = document.getElementById('overallBtn');
   if(overallBtn) overallBtn.addEventListener('click', renderOverallSummary);
   document.getElementById('backMenuBtn').addEventListener('click', ()=>{ STATE.screen='menu'; renderMenu(); });
+  document.querySelectorAll('.explain-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const idx = btn.dataset.idx;
+      const box = document.getElementById(`explain-${idx}`);
+      const arrow = document.getElementById(`arrow-${idx}`);
+      box.classList.toggle('show');
+      arrow.classList.toggle('open');
+    });
+  });
 }
 
 function renderOverallSummary(){
