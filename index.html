@@ -5418,15 +5418,18 @@ function stepInsertHTML(q){
 }
 
 /* ---- STEP 3 & 4: highlight the answer ---- */
+
 function fullPassageText(q, ans){
   let idx=0;
   const p1 = q.part1.template.replace(/\{(\d+)\}/g, ()=>{
     const i=idx++;
     return q.part1.blanks[i].correct;
   });
-  const insertText = q.insertOptions[ans.insertChoice!==null?ans.insertChoice:q.insertOptions.findIndex(o=>o.correct)].text;
+  const insertCorrectIdx = q.insertOptions.findIndex(o=>o.correct);
+  const insertText = q.insertOptions[insertCorrectIdx].text;
   return p1 + ' ' + insertText + ' ' + q.part2;
 }
+
 function stepHighlightHTML(q, stepNum){
   const ans = STATE.answers[q.id];
   const which = stepNum===3 ? 'hl3' : 'hl4';
