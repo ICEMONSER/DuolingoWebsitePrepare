@@ -56,6 +56,20 @@
     margin-top:24px;padding:18px;border-radius:var(--radius);
     background:#e5f8d3;border:2px solid var(--green);display:none;
   }.summary-box.show{display:block;}
+  .notice-box{
+    margin:0 0 26px;padding:16px 20px;border-radius:var(--radius);
+    background:#fffaeb;border:2px solid var(--yellow);
+  }
+  .notice-box .notice-title{
+    display:flex;align-items:center;gap:8px;font-weight:900;font-size:15px;
+    color:#8a6d00;margin-bottom:10px;
+  }
+  .notice-box ul{margin:0 0 10px;padding-left:20px;}
+  .notice-box li{font-size:13.5px;line-height:1.7;color:#5c4a00;margin-bottom:4px;}
+  .notice-box .notice-tip{
+    font-size:13.5px;line-height:1.7;color:#3c3c3c;background:#fff;
+    border-radius:10px;padding:10px 14px;margin-top:8px;border:1px dashed var(--yellow);
+  }
 
   /* ---------- BUTTONS ---------- */
   .btn{
@@ -5251,6 +5265,14 @@ function renderMenu(){
     <div class="menu">
       <h1>🦉 Duolingo Interactive Reading Practice Test</h1>
       <p class="sub">เลือกโจทย์ที่ต้องการฝึก หรือเริ่มทำทั้งหมดตามลำดับ — แต่ละข้อมีเวลา 8 นาที ครบ 6 ขั้นตอน</p>
+      <div class="notice-box">
+        <div class="notice-title">⚠️ ข้อควรทราบก่อนฝึก</div>
+        <ul>
+          <li><b>ระบบไม่ Adaptive:</b> เว็บไซต์นี้เรียงลำดับข้อสอบแบบคงที่ (Fixed) เหมือนเดิมทุกครั้ง ในขณะที่ข้อสอบ DET จริงจะ<b>สุ่มปรับความยาก</b>ของข้อถัดไปตามความสามารถของผู้สอบแบบเรียลไทม์</li>
+          <li><b>คะแนนเพื่อการฝึกซ้อมเท่านั้น:</b> คะแนน % ที่แสดงในเว็บนี้ใช้สำหรับประเมินความเข้าใจของตัวเองเท่านั้น <b>ไม่สามารถนำไปอ้างอิงเป็นคะแนน DET จริงได้</b></li>
+        </ul>
+        <div class="notice-tip">💡 <b>คำแนะนำ:</b> คุณสามารถใช้เว็บไซต์นี้ฝึกซ้อมแทนการอ่านไฟล์ PDF ได้เลย เพราะเนื้อหาเป็นชุดเดียวกัน แต่ใช้งานสะดวกและโต้ตอบได้มากกว่า</div>
+      </div>
       <div class="qgrid">${cards}</div>
       <div class="start-all-btn">
         <button class="btn btn-primary" id="startAllBtn">เริ่มทำทั้งหมด (Question 1 → 6)</button>
