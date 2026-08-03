@@ -1,0 +1,5671 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Duolingo Interactive Reading Practice Test</title>
+<style>
+  :root{
+    --green:#58cc02;
+    --green-dark:#46a302;
+    --green-darker:#3c9302;
+    --blue:#1cb0f6;
+    --red:#ff4b4b;
+    --yellow:#ffc800;
+    --ink:#3c3c3c;
+    --ink-light:#777;
+    --line:#e5e5e5;
+    --bg:#ffffff;
+    --bg-soft:#f7f7f7;
+    --radius:16px;
+    --shadow:0 4px 0 rgba(0,0,0,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;
+    background:var(--bg-soft);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:900px;margin:0 auto;min-height:100vh;background:var(--bg);box-shadow:0 0 40px rgba(0,0,0,0.05);position:relative;}
+
+  /* ---------- HEADER / TOPBAR ---------- */
+  .topbar{
+    display:flex;align-items:center;gap:16px;
+    padding:14px 24px;border-bottom:2px solid var(--line);
+    position:sticky;top:0;background:var(--bg);z-index:20;
+  }.brand{font-weight:900;color:var(--green);font-size:22px;letter-spacing:-0.5px;display:flex;align-items:center;gap:8px;}.brand .owl{font-size:26px;}.progressbar-wrap{flex:1;height:16px;background:var(--line);border-radius:99px;overflow:hidden;}.progressbar-fill{height:100%;background:var(--green);border-radius:99px;transition:width .35s ease;}.timer{
+    font-weight:800;font-size:16px;color:var(--ink);
+    background:var(--bg-soft);border:2px solid var(--line);
+    padding:6px 14px;border-radius:99px;min-width:78px;text-align:center;
+  }.timer.low{color:var(--red);border-color:var(--red);}
+
+  /* ---------- MENU ---------- */
+  .menu{padding:32px 24px 60px;}.menu h1{font-size:28px;font-weight:900;margin:0 0 4px;}.menu p.sub{color:var(--ink-light);margin:0 0 28px;font-size:15px;}.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}.qcard{
+    border:2px solid var(--line);border-radius:var(--radius);padding:18px;
+    cursor:pointer;transition:all .15s ease;background:var(--bg);position:relative;
+  }.qcard:hover{border-color:var(--green);transform:translateY(-2px);box-shadow:var(--shadow);}.qcard .qnum{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:34px;height:34px;border-radius:50%;background:#e5f8d3;color:var(--green-dark);
+    font-weight:900;margin-bottom:10px;
+  }.qcard h3{margin:0 0 4px;font-size:16px;}.qcard .score-badge{
+    position:absolute;top:14px;right:14px;font-size:12px;font-weight:800;
+    padding:4px 10px;border-radius:99px;background:var(--green);color:#fff;
+  }.start-all-btn{margin-top:26px;}.summary-box{
+    margin-top:24px;padding:18px;border-radius:var(--radius);
+    background:#e5f8d3;border:2px solid var(--green);display:none;
+  }.summary-box.show{display:block;}
+
+  /* ---------- BUTTONS ---------- */
+  .btn{
+    font-family:inherit;font-weight:800;font-size:15px;border:none;border-radius:14px;
+    padding:14px 26px;cursor:pointer;transition:transform .08s ease, filter .15s ease;
+  }.btn:active{transform:translateY(2px);}.btn-primary{background:var(--green);color:#fff;box-shadow:0 4px 0 var(--green-darker);}.btn-primary:hover{filter:brightness(1.05);}.btn-primary:disabled{background:#e5e5e5;color:#afafaf;box-shadow:0 4px 0 #d0d0d0;cursor:not-allowed;}.btn-outline{background:#fff;color:var(--blue);border:2px solid var(--blue);box-shadow:0 4px 0 #bfe8fc;}.btn-ghost{background:transparent;color:var(--ink-light);}
+
+  /* ---------- STEP LAYOUT ---------- */
+  .step{padding:28px 26px 120px;}.step-kicker{color:var(--green-dark);font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}.step-title{font-size:22px;font-weight:900;margin:0 0 18px;}.instructions{background:#eef8ff;border:2px solid #bfe8fc;color:#0a6ea3;padding:12px 16px;border-radius:12px;font-size:14px;margin-bottom:20px;}.passage{
+    font-size:17px;line-height:1.9;background:var(--bg-soft);
+    padding:20px 22px;border-radius:var(--radius);border:2px solid var(--line);
+  }.passage.selectable{user-select:text;cursor:text;}.passage .hl-user{background:#fff3b0;border-radius:3px;}.passage .hl-correct{background:#c8f0b0;border-radius:3px;}.passage .hl-wrong{background:#ffd0d0;border-radius:3px;text-decoration:line-through;}
+
+  /* dropdown blanks */
+  .blank-wrap{position:relative;display:inline-block;margin:0 2px;}.blank-btn{
+    display:inline-block;min-width:70px;padding:2px 10px;border-radius:8px;
+    border:2px dashed var(--blue);color:var(--blue);font-weight:700;background:#eef8ff;
+    cursor:pointer;text-align:center;
+  }.blank-btn.filled{border-style:solid;background:#eef8ff;}.blank-btn.preview{font-style:italic;color:#0a6ea3;}.blank-dropdown{
+    position:absolute;top:110%;left:0;background:#fff;border:2px solid var(--line);
+    border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:30;min-width:160px;
+    padding:6px;display:none;
+  }.blank-dropdown.open{display:block;}.blank-option{padding:8px 10px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;}.blank-option:hover, .blank-option.hoverpreview{background:#e5f8d3;color:var(--green-dark);}
+
+  /* choice list (insert sentence / idea / title) */
+  .choice-list{display:flex;flex-direction:column;gap:12px;margin-top:18px;}.choice{
+    border:2px solid var(--line);border-radius:14px;padding:14px 18px;
+    cursor:pointer;font-size:15px;line-height:1.5;transition:all .12s ease;
+  }.choice:hover{border-color:var(--blue);background:#f4fbff;}.choice.selected{border-color:var(--blue);background:#eef8ff;}.choice.correct{border-color:var(--green);background:#e5f8d3;}.choice.incorrect{border-color:var(--red);background:#ffe9e9;}
+
+  /* passage split for step2 */
+  .split-passage{font-size:16px;line-height:1.85;}.split-passage .p1{background:var(--bg-soft);padding:16px 18px;border-radius:12px;border:2px solid var(--line);}.insert-slot{
+    margin:10px 0;padding:12px 16px;border:2px dashed var(--blue);border-radius:12px;
+    color:var(--blue);font-weight:700;text-align:center;background:#eef8ff;min-height:20px;
+  }.split-passage .p2{background:var(--bg-soft);padding:16px 18px;border-radius:12px;border:2px solid var(--line);margin-top:10px;}
+
+  /* footer action bar */
+  .action-bar{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:900px;
+    background:#fff;border-top:2px solid var(--line);padding:16px 26px;
+    display:flex;justify-content:flex-end;gap:12px;z-index:15;
+  }
+
+  /* ---------- RESULT PAGE ---------- */
+  .result{padding:32px 26px 60px;}.result-hero{
+    text-align:center;padding:26px;border-radius:var(--radius);
+    background:linear-gradient(135deg,#e5f8d3,#d6f5b8);margin-bottom:26px;
+  }.result-hero .score{font-size:52px;font-weight:900;color:var(--green-dark);}.result-hero .label{color:var(--ink-light);font-weight:700;}.review-item{border:2px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px;}.review-item.ok{border-color:var(--green);}.review-item.bad{border-color:var(--red);}.review-item .tag{
+    display:inline-block;font-size:12px;font-weight:800;padding:3px 10px;border-radius:99px;margin-bottom:8px;
+  }.review-item.ok .tag{background:#e5f8d3;color:var(--green-dark);}.review-item.bad .tag{background:#ffe9e9;color:var(--red);}.review-item .q{font-weight:700;margin-bottom:6px;}.review-item .ans{font-size:14px;color:var(--ink-light);}.review-item .ans b{color:var(--ink);}.result-actions{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;}
+
+  @media(max-width:640px){
+    .step{padding:20px 16px 120px;}.menu{padding:20px 16px 60px;}.action-bar{padding:12px 16px;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+const QUESTIONS = [
+  {
+    "id": 1,
+    "topic": "Alternative Energy Sources",
+    "part1": {
+      "template": "Transportation systems have been {1} linked to natural resources, especially oil, for the past hundred {2}. The oil {3} has {4} a major profit maker for many {5} and countries.",
+      "blanks": [
+        {
+          "options": [
+            "sometimes",
+            "the",
+            "only",
+            "not",
+            "closely"
+          ],
+          "correct": "closely"
+        },
+        {
+          "options": [
+            "years",
+            "minutes",
+            "decade",
+            "miles",
+            "hours"
+          ],
+          "correct": "years"
+        },
+        {
+          "options": [
+            "place",
+            "industry",
+            "façade",
+            "organizations",
+            "companies"
+          ],
+          "correct": "industry"
+        },
+        {
+          "options": [
+            "introduced",
+            "formed",
+            "been",
+            "created",
+            "established"
+          ],
+          "correct": "been"
+        },
+        {
+          "options": [
+            "energies",
+            "sources",
+            "nations",
+            "people",
+            "corporations"
+          ],
+          "correct": "corporations"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "The spill contaminated fish, birds, and shellfish and unfinished marine life for generations to come.",
+        "correct": false
+      },
+      {
+        "text": "However, there are significant environmental problems and potential security risks due to the widespread use of oil.",
+        "correct": true
+      },
+      {
+        "text": "Environmental impact assessments (EIAs) are only intended to maximize benefits of development while minimizing possible ecological damage.",
+        "correct": false
+      },
+      {
+        "text": "Ineffective energy policies and diminishing natural resources have led the country to begin tapping into their coal reserves.",
+        "correct": false
+      }
+    ],
+    "part2": "Alternatives to oil sources can be found in both renewable (solar, wind) and nonrenewable (nuclear) sources of energy. Equally as important as alternative sources are conservation and fuel efficiency. As awareness about these issues grows, businesses will begin to incorporate alternative energy sources into their supply chain management plans. We are in the midst of a global energy revolution, and the key question is whether alternative energy sources can help meet our growing demand for energy.",
+    "highlightQs": [
+      {
+        "question": "What are some examples of alternatives to oil?",
+        "answer": "renewable (solar, wind) and nonrenewable (nuclear) sources of energy"
+      },
+      {
+        "question": "What will businesses begin to do as awareness of issues around oil grows?",
+        "answer": "incorporate alternative energy sources into their supply chain management plans"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "Current uses of alternative energy include solar power, biomass power, geothermal power, and hydropower as well as wind, and ocean currents.",
+        "correct": false
+      },
+      {
+        "text": "In 1940, petroleum use decreased significantly to meet military needs for gasoline for aircraft and other types of mobility.",
+        "correct": false
+      },
+      {
+        "text": "Fossil fuels are used to generate electricity, because mechanical devices are made to run off electricity instead of steam or water.",
+        "correct": false
+      },
+      {
+        "text": "Oil has been a major source of profit for many corporations and countries, but there are environmental issues and security risks.",
+        "correct": true
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Alternative Energy Sources",
+        "correct": true
+      },
+      {
+        "text": "Managing an Oil Spill",
+        "correct": false
+      },
+      {
+        "text": "The Rise of the Oil Industry",
+        "correct": false
+      },
+      {
+        "text": "Solar Power Advances",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "topic": "The Marvelous World of the Human Brain",
+    "part1": {
+      "template": "The human brain is one of the most {1} organs in the body, weighing about 1.4 kilograms on average. It controls {2} functions like heartbeat, digestion, and {3} regulation, along with cognitive functions such as thought, memory, and emotion. Structurally, the brain is divided into different {4}, each responsible for specific tasks. The cerebral cortex, for {5} is responsible for {6}, problem-solving, and other higher-order {7}.",
+      "blanks": [
+        {
+          "options": [
+            "tiny",
+            "complex",
+            "transparent",
+            "hollow"
+          ],
+          "correct": "complex"
+        },
+        {
+          "options": [
+            "voluntary",
+            "simple",
+            "automatic",
+            "dormant"
+          ],
+          "correct": "automatic"
+        },
+        {
+          "options": [
+            "banking",
+            "strict",
+            "normal",
+            "temperature"
+          ],
+          "correct": "temperature"
+        },
+        {
+          "options": [
+            "cells",
+            "bones",
+            "chambers",
+            "regions"
+          ],
+          "correct": "regions"
+        },
+        {
+          "options": [
+            "ward",
+            "instance",
+            "occasion",
+            "sample"
+          ],
+          "correct": "instance"
+        },
+        {
+          "options": [
+            "digestion",
+            "circulation",
+            "reasoning",
+            "filtering"
+          ],
+          "correct": "reasoning"
+        },
+        {
+          "options": [
+            "things",
+            "functions",
+            "actions",
+            "perform"
+          ],
+          "correct": "functions"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "The heart, on the other hand, is primarily responsible for pumping blood.",
+        "correct": false
+      },
+      {
+        "text": "The brain also contains millions of neurons that communicate through electrical impulses.",
+        "correct": true
+      },
+      {
+        "text": "Sunlight is crucial for the proper functioning of the brain.",
+        "correct": false
+      },
+      {
+        "text": "Exercise can have a detrimental effect on the brain’s health.",
+        "correct": false
+      }
+    ],
+    "part2": "One of its notable structures is the hippocampus, essential for forming and storing memories.",
+    "highlightQs": [
+      {
+        "question": "What is the role of the hippocampus?",
+        "answer": "forming and storing memories"
+      },
+      {
+        "question": "What is the role of the cerebral cortex?",
+        "answer": "responsible for reasoning, problem-solving, and other higher-order functions"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The weight and measurement of the human brain.",
+        "correct": false
+      },
+      {
+        "text": "The significance of the heart in the human body.",
+        "correct": false
+      },
+      {
+        "text": "The different functions and structures of the human brain.",
+        "correct": true
+      },
+      {
+        "text": "The process of neuron communication in the brain.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "The Marvelous World of the Human Brain",
+        "correct": true
+      },
+      {
+        "text": "Understanding Neurons: The Brain’s Messengers",
+        "correct": false
+      },
+      {
+        "text": "A Deep Dive into the Cerebral Cortex",
+        "correct": false
+      },
+      {
+        "text": "Memory and Emotion: The Role of the Hippocampus",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "topic": "Lara’s Musical Marvel",
+    "part1": {
+      "template": "At the {1} science fair, young inventor Lara presented her {2} robot. As spectators gathered, the robot began to {3} a tune, surprising {4} with its musical {5}.",
+      "blanks": [
+        {
+          "options": [
+            "annual",
+            "final",
+            "biggest",
+            "smallest"
+          ],
+          "correct": "annual"
+        },
+        {
+          "options": [
+            "dancing",
+            "speaking",
+            "singing",
+            "jumping"
+          ],
+          "correct": "singing"
+        },
+        {
+          "options": [
+            "recite",
+            "play",
+            "paint",
+            "write"
+          ],
+          "correct": "play"
+        },
+        {
+          "options": [
+            "everyone",
+            "it",
+            "him",
+            "meeting"
+          ],
+          "correct": "everyone"
+        },
+        {
+          "options": [
+            "appearance",
+            "talent",
+            "strength",
+            "speed"
+          ],
+          "correct": "talent"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "The fair was held in a vast arena.",
+        "correct": false
+      },
+      {
+        "text": "The weather outside was stormy and unpredictable.",
+        "correct": false
+      },
+      {
+        "text": "Among the spectators was a renowned scientist.",
+        "correct": true
+      },
+      {
+        "text": "Her shoes squeaked as she walked to the podium.",
+        "correct": false
+      }
+    ],
+    "part2": "Enthusiastic children approached, eager to learn how the machine worked. Lara, with pride in her eyes, explained the intricate details of her invention, captivating her audience with her passion for robotics.",
+    "highlightQs": [
+      {
+        "question": "What surprised the spectators about the robot?",
+        "answer": "its musical talent"
+      },
+      {
+        "question": "What did the children want to know?",
+        "answer": "how the machine worked"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The significance of the annual science fair.",
+        "correct": false
+      },
+      {
+        "text": "Lara’s pride in her singing robot invention.",
+        "correct": true
+      },
+      {
+        "text": "The robot’s ability to perform multiple tasks.",
+        "correct": false
+      },
+      {
+        "text": "The renowned scientist’s influence on young inventors.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "A Day at the Science Fair",
+        "correct": false
+      },
+      {
+        "text": "Lara’s Musical Marvel",
+        "correct": true
+      },
+      {
+        "text": "Children and Their Curiosity",
+        "correct": false
+      },
+      {
+        "text": "The Scientist’s Observation",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "topic": "The Apple Fest: Beyond the Fruit",
+    "part1": {
+      "template": "In a small town nestled in the {1}, a family named the Millers cherished their longstanding {2} of harvesting apples every autumn. They owned a sprawling orchard that spanned fifty {3}, and every October, the whole {4} would come to help and {5}. This annual gathering was {6} termed the “Miller’s {7} Fest.”",
+      "blanks": [
+        {
+          "options": [
+            "mountains",
+            "sea",
+            "city",
+            "desert"
+          ],
+          "correct": "mountains"
+        },
+        {
+          "options": [
+            "house",
+            "wealth",
+            "tradition",
+            "song"
+          ],
+          "correct": "tradition"
+        },
+        {
+          "options": [
+            "acres",
+            "miles",
+            "rooms",
+            "stories"
+          ],
+          "correct": "acres"
+        },
+        {
+          "options": [
+            "world",
+            "town",
+            "suburb",
+            "group"
+          ],
+          "correct": "town"
+        },
+        {
+          "options": [
+            "cook",
+            "memorialize",
+            "celebrate",
+            "keep"
+          ],
+          "correct": "celebrate"
+        },
+        {
+          "options": [
+            "therefore",
+            "thereby",
+            "not",
+            "affectionately"
+          ],
+          "correct": "affectionately"
+        },
+        {
+          "options": [
+            "Apple",
+            "Winter",
+            "Dance",
+            "Pumpkin"
+          ],
+          "correct": "Apple"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "The Millers never liked apples much.",
+        "correct": false
+      },
+      {
+        "text": "The orchard was sold after a few years.",
+        "correct": false
+      },
+      {
+        "text": "The town had several such festivals.",
+        "correct": false
+      },
+      {
+        "text": "This festivity was not just about apples.",
+        "correct": true
+      }
+    ],
+    "part2": "Children would engage in apple-bobbing contests while their parents exchanged recipes for apple pies and cider. As the sun set, the community would gather around a large bonfire, sharing stories and singing songs under the starry sky. It was a time of unity and joy for everyone involved.",
+    "highlightQs": [
+      {
+        "question": "What did the children do at the Miller’s Apple Fest?",
+        "answer": "engage in apple-bobbing contests"
+      },
+      {
+        "question": "What did the community do as the sun set?",
+        "answer": "gather around a large bonfire, sharing stories and singing songs"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The story details the Millers’ dislike for apples.",
+        "correct": false
+      },
+      {
+        "text": "The Millers had a tradition of harvesting apples, which brought the community together.",
+        "correct": true
+      },
+      {
+        "text": "The Millers’ Apple Fest was primarily about selling apples.",
+        "correct": false
+      },
+      {
+        "text": "The town was known for its mountainous terrain.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "The Mountains of the Millers",
+        "correct": false
+      },
+      {
+        "text": "The Millers’ Expansive Orchard",
+        "correct": false
+      },
+      {
+        "text": "Orange Recipes and Celebrations",
+        "correct": false
+      },
+      {
+        "text": "The Apple Fest: Beyond the Fruit",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "topic": "The Wide Range of Movie-Related Careers",
+    "part1": {
+      "template": "Making movies has become a {1} industry worldwide that provides jobs for a {2} number of people both directly and {3}. However, most people do not realize the {4} of jobs available in this field. There are opportunities in areas {5} acting and directing to {6} and marketing.",
+      "blanks": [
+        {
+          "options": [
+            "major",
+            "small",
+            "local",
+            "specific"
+          ],
+          "correct": "major"
+        },
+        {
+          "options": [
+            "large",
+            "tiny",
+            "moderate",
+            "limited"
+          ],
+          "correct": "large"
+        },
+        {
+          "options": [
+            "straight",
+            "opposite",
+            "right",
+            "indirectly"
+          ],
+          "correct": "indirectly"
+        },
+        {
+          "options": [
+            "range",
+            "lack",
+            "deficit",
+            "difficulty"
+          ],
+          "correct": "range"
+        },
+        {
+          "options": [
+            "from",
+            "at",
+            "on",
+            "in"
+          ],
+          "correct": "from"
+        },
+        {
+          "options": [
+            "write",
+            "financing",
+            "advertise",
+            "hunting"
+          ],
+          "correct": "financing"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "The entertainment industry continues to grow and expand globally providing exciting career possibilities for motivated individuals.",
+        "correct": true
+      },
+      {
+        "text": "Actors sometimes get roles in movies by knowing the director personally or having connections from previous work.",
+        "correct": false
+      },
+      {
+        "text": "Directing a movie requires both technical expertise with cameras and lights as well as leadership skills for managing a large team.",
+        "correct": false
+      },
+      {
+        "text": "Many people enjoy watching movies in their free time as a way to relax.",
+        "correct": false
+      }
+    ],
+    "part2": "Other careers can be found in television, streaming services, computer animation, visual effects, and video game development which all employ professionals with movie industry skills.",
+    "highlightQs": [
+      {
+        "question": "What do most people not know about the film industry?",
+        "answer": "most people do not realize the range of jobs available in this field"
+      },
+      {
+        "question": "Where can people with with entertainment industry skills find a job?",
+        "answer": "television, streaming services, computer animation, visual effects, and video game development"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "Acting and directing are common careers in the movie industry.",
+        "correct": false
+      },
+      {
+        "text": "New technologies are creating more movie industry jobs.",
+        "correct": false
+      },
+      {
+        "text": "Most people are unaware of the wide range of movie related careers.",
+        "correct": true
+      },
+      {
+        "text": "The entertainment industry is growing and providing new opportunities.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "New Careers in the Entertainment Industry",
+        "correct": false
+      },
+      {
+        "text": "The Global Movie Business",
+        "correct": false
+      },
+      {
+        "text": "Jobs in Acting and Directing",
+        "correct": false
+      },
+      {
+        "text": "The Wide Range of Movie-Related Careers",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "topic": "Burst Pipe Wreaks Havoc: A Day of Delays",
+    "part1": {
+      "template": "Yesterday, downtown witnessed an unexpected {1} in traffic due to the sudden closure of Main Street. The closure was a {2} of an underground pipe burst, which led to {3} flooding in the {4}. Local businesses faced {5} delays in their operations, with several reporting {6} deliveries. City engineers are currently {7} the situation to determine when the street can be {8} reopened.",
+      "blanks": [
+        {
+          "options": [
+            "spike",
+            "drop",
+            "diversion",
+            "cause"
+          ],
+          "correct": "spike"
+        },
+        {
+          "options": [
+            "result",
+            "cause",
+            "reflection",
+            "sign"
+          ],
+          "correct": "result"
+        },
+        {
+          "options": [
+            "minor",
+            "agreeable",
+            "interesting",
+            "inexpensive"
+          ],
+          "correct": "minor"
+        },
+        {
+          "options": [
+            "campground",
+            "fields",
+            "vicinity",
+            "basement"
+          ],
+          "correct": "vicinity"
+        },
+        {
+          "options": [
+            "unexpected",
+            "pleasant",
+            "significant",
+            "negligible"
+          ],
+          "correct": "significant"
+        },
+        {
+          "options": [
+            "successful",
+            "canceled",
+            "voided",
+            "delayed"
+          ],
+          "correct": "delayed"
+        },
+        {
+          "options": [
+            "monitoring",
+            "avoiding",
+            "ignoring",
+            "promoting"
+          ],
+          "correct": "monitoring"
+        },
+        {
+          "options": [
+            "safely",
+            "postponed",
+            "road",
+            "quickly"
+          ],
+          "correct": "safely"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Visitors are encouraged to attend the nearby food festival despite the inconvenience.",
+        "correct": false
+      },
+      {
+        "text": "Schools in the area have been given a holiday due to the traffic issues.",
+        "correct": false
+      },
+      {
+        "text": "The economic impact of the closure is yet to be determined by analysts.",
+        "correct": false
+      },
+      {
+        "text": "The public transport system has seen a surge in usage as a result.",
+        "correct": true
+      }
+    ],
+    "part2": "The mayor urged residents to avoid the area and use alternative routes to help alleviate congestion until the repairs are completed.",
+    "highlightQs": [
+      {
+        "question": "Why was Main Street suddenly closed?",
+        "answer": "The closure was a result of an underground pipe burst, which led to minor flooding in the vicinity."
+      },
+      {
+        "question": "What effect did the street closure have on local businesses?",
+        "answer": "significant delays in their operations, with several reporting disrupted deliveries"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The engineering flaws of city infrastructure.",
+        "correct": false
+      },
+      {
+        "text": "The effects of sudden street closures on a city’s daily operations and public transport.",
+        "correct": true
+      },
+      {
+        "text": "The mayor’s proactive approach to city management.",
+        "correct": false
+      },
+      {
+        "text": "The resilience of local businesses in the face of adversity.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Burst Pipe Wreaks Havoc: A Day of Delays",
+        "correct": true
+      },
+      {
+        "text": "Main Street Flooding: A Test for City Management",
+        "correct": false
+      },
+      {
+        "text": "Businesses Rally Despite Unexpected Challenges",
+        "correct": false
+      },
+      {
+        "text": "A Lesson in Infrastructure: The Main Street Incident",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "topic": "Mr. Hamilton’s Legacy",
+    "part1": {
+      "template": "In the heart of the city, a small bookstore stood tucked away from the bustling {1}. Every afternoon, Mr. Hamilton would {2} his chair outside, reading a {3} while sipping {4} tea. People would often {5} to ask for book recommendations or simply to chat.",
+      "blanks": [
+        {
+          "options": [
+            "mountains",
+            "streets",
+            "clouds",
+            "trees"
+          ],
+          "correct": "streets"
+        },
+        {
+          "options": [
+            "throw",
+            "paint",
+            "place",
+            "eat"
+          ],
+          "correct": "place"
+        },
+        {
+          "options": [
+            "encyclopedia",
+            "dictionary",
+            "novel",
+            "palms"
+          ],
+          "correct": "novel"
+        },
+        {
+          "options": [
+            "cold",
+            "salty",
+            "spicy",
+            "hot"
+          ],
+          "correct": "hot"
+        },
+        {
+          "options": [
+            "run",
+            "signal",
+            "stop",
+            "sing"
+          ],
+          "correct": "stop"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "His collection of vintage shoes was unparalleled in the city.",
+        "correct": false
+      },
+      {
+        "text": "His hair was always in a state of disarray, hinting at a recent nap.",
+        "correct": false
+      },
+      {
+        "text": "His stories were as captivating as the books he sold.",
+        "correct": true
+      },
+      {
+        "text": "He always wore the same plaid shirt, rain or shine.",
+        "correct": false
+      }
+    ],
+    "part2": "The neighborhood kids loved hearing his tales about faraway lands and adventures, often imagining themselves as the protagonists. Many credited Mr. Hamilton with igniting their passion for reading.",
+    "highlightQs": [
+      {
+        "question": "What would Mr. Hamilton do every afternoon outside his bookstore?",
+        "answer": "place his chair outside, reading a novel while sipping hot tea."
+      },
+      {
+        "question": "Who loved hearing Mr. Hamilton’s tales about adventures?",
+        "answer": "The neighborhood kids"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The growth and expansion of cities.",
+        "correct": false
+      },
+      {
+        "text": "The daily routine of a traffic officer.",
+        "correct": false
+      },
+      {
+        "text": "The joys of outdoor reading and sunbathing.",
+        "correct": false
+      },
+      {
+        "text": "The impact of a small bookstore owner on his community.",
+        "correct": true
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Tea Time in the City",
+        "correct": false
+      },
+      {
+        "text": "Mr. Hamilton’s Legacy",
+        "correct": true
+      },
+      {
+        "text": "Tales of a Bustling Street",
+        "correct": false
+      },
+      {
+        "text": "Books and More: The City’s Oasis",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "topic": "Photosynthesis and Its Global Impacts",
+    "part1": {
+      "template": "In photosynthesis, plants convert carbon dioxide and {1} into glucose and oxygen using {2} from the sun. This process is crucial for the {3} of plants and for all life on {4}. The oxygen produced is released into the {5}, providing a {6} component for most organisms to {7}.",
+      "blanks": [
+        {
+          "options": [
+            "minerals",
+            "sunlight",
+            "water",
+            "soil"
+          ],
+          "correct": "water"
+        },
+        {
+          "options": [
+            "sunlight",
+            "energy",
+            "sunshine",
+            "power"
+          ],
+          "correct": "energy"
+        },
+        {
+          "options": [
+            "destruction",
+            "movement",
+            "survival",
+            "communication"
+          ],
+          "correct": "survival"
+        },
+        {
+          "options": [
+            "Earth",
+            "world",
+            "planet",
+            "globe"
+          ],
+          "correct": "Earth"
+        },
+        {
+          "options": [
+            "soil",
+            "roots",
+            "atmosphere",
+            "oceans"
+          ],
+          "correct": "atmosphere"
+        },
+        {
+          "options": [
+            "vigorous",
+            "useful",
+            "necessary",
+            "helpful"
+          ],
+          "correct": "necessary"
+        },
+        {
+          "options": [
+            "breathe",
+            "work",
+            "photosynthesize",
+            "exhale"
+          ],
+          "correct": "breathe"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "The process of photosynthesis is primarily a nocturnal activity.",
+        "correct": false
+      },
+      {
+        "text": "Therefore, plants are considered the primary producers in most ecosystems.",
+        "correct": true
+      },
+      {
+        "text": "Over-watering plants can hinder the process of photosynthesis.",
+        "correct": false
+      },
+      {
+        "text": "All plants require equal amounts of sunlight to undergo photosynthesis.",
+        "correct": false
+      }
+    ],
+    "part2": "Not only does photosynthesis support oxygen levels, but it also plays a vital role in the carbon cycle, helping regulate global temperatures.",
+    "highlightQs": [
+      {
+        "question": "Why is photosynthesis important for most organisms on Earth?",
+        "answer": "The oxygen produced is released into the atmosphere, providing a necessary component for most organisms to breathe."
+      },
+      {
+        "question": "What other significant role does photosynthesis play beyond supporting oxygen levels?",
+        "answer": "plays a vital role in the carbon cycle, helping regulate global temperatures"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The effects of global warming on photosynthesis.",
+        "correct": false
+      },
+      {
+        "text": "The importance of water for plants.",
+        "correct": false
+      },
+      {
+        "text": "The role of photosynthesis in ecosystems and climate regulation.",
+        "correct": true
+      },
+      {
+        "text": "The nutritional needs of plants.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "The Breath of Life: Oxygen and Us",
+        "correct": false
+      },
+      {
+        "text": "Photosynthesis: Nature’s Solar Panel",
+        "correct": false
+      },
+      {
+        "text": "Plants: The World’s Primary Producers",
+        "correct": false
+      },
+      {
+        "text": "Photosynthesis and Its Global Impacts",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "topic": "Jennifer and the Club Fair",
+    "part1": {
+      "template": "Jennifer was a senior at the local {1}, studying urban studies. One day, while she was walking to {2}, she noticed a {3} group of urban studies students. She thought they {4} like they were having fun {5} about a {6} club for Urban Studies.",
+      "blanks": [
+        {
+          "options": [
+            "university",
+            "side",
+            "paper",
+            "company",
+            "city"
+          ],
+          "correct": "university"
+        },
+        {
+          "options": [
+            "home",
+            "class",
+            "city",
+            "there"
+          ],
+          "correct": "class"
+        },
+        {
+          "options": [
+            "large",
+            "good",
+            "double",
+            "single",
+            "long"
+          ],
+          "correct": "large"
+        },
+        {
+          "options": [
+            "looked",
+            "act",
+            "more",
+            "talk",
+            "just"
+          ],
+          "correct": "looked"
+        },
+        {
+          "options": [
+            "working",
+            "studying",
+            "talking",
+            "speaking"
+          ],
+          "correct": "talking"
+        },
+        {
+          "options": [
+            "new",
+            "no",
+            "girl",
+            "like",
+            "a"
+          ],
+          "correct": "new"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "She decided to go to the next meeting to learn more about the club and how she could join.",
+        "correct": true
+      },
+      {
+        "text": "The students decided to make a club of their own and they picked Urban Studies as the subject.",
+        "correct": false
+      },
+      {
+        "text": "She wanted to feel that she was making a difference and she wanted to do something with her schoolmates.",
+        "correct": false
+      },
+      {
+        "text": "There was a new club in town that made Urban Studies students think twice about going to class.",
+        "correct": false
+      }
+    ],
+    "part2": "When she arrived, the club members were talking about a fair they wanted to hold for a local charity. Jennifer decided she would help them get the fair started. The club members worked together to help fundraise, and plan events for a spring fair. When the weekend of the fair came, it was a huge success and they raised a lot of money for the charity.",
+    "highlightQs": [
+      {
+        "question": "What was Jennifer doing when she heard about the Urban Studies club?",
+        "answer": "she was walking to class"
+      },
+      {
+        "question": "What did Jennifer do to help the Urban Studies club?",
+        "answer": "help them get the fair started"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "Jennifer decided to join an Urban Studies club and helped them with a spring fair for a local charity.",
+        "correct": true
+      },
+      {
+        "text": "Jennifer was interested in starting up an Urban Studies club but she wasn’t sure if it was a good idea at first.",
+        "correct": false
+      },
+      {
+        "text": "The students at the university wanted to create a more exciting and fun club than their Urban Studies club.",
+        "correct": false
+      },
+      {
+        "text": "The club was formed by a group of students who were interested in Urban Studies and wanted to make it more financially viable.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Jennifer Starts a Club",
+        "correct": false
+      },
+      {
+        "text": "The City Fair",
+        "correct": false
+      },
+      {
+        "text": "The Club’s First Decision",
+        "correct": false
+      },
+      {
+        "text": "Jennifer and the Club Fair",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "topic": "Bev’s Pet Bird",
+    "part1": {
+      "template": "As soon as Bev {1} how much she {2} animals, she took a {3} at a pet store. She {4} out working with fish and reptiles before she {5} to the bird department.",
+      "blanks": [
+        {
+          "options": [
+            "changed",
+            "realized",
+            "was",
+            "and",
+            "announced"
+          ],
+          "correct": "realized"
+        },
+        {
+          "options": [
+            "loved",
+            "interested",
+            "attracted",
+            "disliked"
+          ],
+          "correct": "loved"
+        },
+        {
+          "options": [
+            "class",
+            "seat",
+            "job",
+            "test",
+            "gig"
+          ],
+          "correct": "job"
+        },
+        {
+          "options": [
+            "started",
+            "her",
+            "kept",
+            "set",
+            "is"
+          ],
+          "correct": "started"
+        },
+        {
+          "options": [
+            "goes",
+            "go",
+            "relocated",
+            "jumped",
+            "moved"
+          ],
+          "correct": "moved"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "She loved birds so much that she ended up buying a bird from the store.",
+        "correct": true
+      },
+      {
+        "text": "But when she visited a pet store to look around, she found a Labrador retriever puppy.",
+        "correct": false
+      },
+      {
+        "text": "Bev was able to go with her grandmother, who was more than happy to take care of her.",
+        "correct": false
+      },
+      {
+        "text": "One day she saw a sheep near the barn and realized that she loved animals.",
+        "correct": false
+      }
+    ],
+    "part2": "She had things professionally made for her bird because she wanted to make sure it would be safe and comfortable. It had a cage that was designed especially for it and, when she wasn’t at work, it was on her shoulder or on her head. She loved her bird and loved being able to work with birds at her job.",
+    "highlightQs": [
+      {
+        "question": "How did Bev feel about her bird?",
+        "answer": "She loved her bird so much"
+      },
+      {
+        "question": "What did Bev start out working with at the pet store?",
+        "answer": "fish and reptiles"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "Bev has been working with animals her whole life.",
+        "correct": false
+      },
+      {
+        "text": "Bev was a child when she first visited a pet store.",
+        "correct": false
+      },
+      {
+        "text": "Bev loved animals so much that she took a job at a pet store.",
+        "correct": true
+      },
+      {
+        "text": "Bev was an animal lover and wanted to be a veterinarian when she grew up.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Bev’s Pet Store",
+        "correct": false
+      },
+      {
+        "text": "Bev’s Pet Bird",
+        "correct": true
+      },
+      {
+        "text": "A Job at the Zoo",
+        "correct": false
+      },
+      {
+        "text": "Caring for a Bird",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "topic": "Mariza Goes to College",
+    "part1": {
+      "template": "Mariza had been a good student at school and had planned to {1} further. She had always {2} to go to college. She was 34 now, and {3} a successful career {4} a fashion designer, but she had never had the {5} to go. Select the best option for each missing word:",
+      "blanks": [
+        {
+          "options": [
+            "study",
+            "work",
+            "go",
+            "pursue",
+            "try"
+          ],
+          "correct": "study"
+        },
+        {
+          "options": [
+            "waited",
+            "wanted",
+            "thought",
+            "started",
+            "considered"
+          ],
+          "correct": "wanted"
+        },
+        {
+          "options": [
+            "followed",
+            "took",
+            "ran",
+            "had",
+            "with"
+          ],
+          "correct": "had"
+        },
+        {
+          "options": [
+            "in",
+            "of",
+            "for",
+            "as",
+            "by"
+          ],
+          "correct": "as"
+        },
+        {
+          "options": [
+            "chance",
+            "luck",
+            "company",
+            "success",
+            "part"
+          ],
+          "correct": "chance"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "She decided that she might as well do the course abroad.",
+        "correct": false
+      },
+      {
+        "text": "Now she finally had the time in her life to go to college.",
+        "correct": true
+      },
+      {
+        "text": "After she graduated, Mariza went back to Brazil for the summer.",
+        "correct": false
+      },
+      {
+        "text": "When Mariza was 18 she decided she wanted to go away to college.",
+        "correct": false
+      }
+    ],
+    "part2": "She was thrilled when she received her acceptance letter. She spent several months deciding which classes she would take. She thought the classes would be difficult because she had been out of school for several years, but she was pleasantly surprised when she received high marks on her assignments. She was glad she decided to go back to school.",
+    "highlightQs": [
+      {
+        "question": "Why had Mariza not been able to go to college before?",
+        "answer": "she had never had the chance to go"
+      },
+      {
+        "question": "What did Mariza do after she received her acceptance letter?",
+        "answer": "She spent several months deciding which classes she would take."
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "Mariza felt inferior to the other girls her age and she didn’t feel like she was worth anything.",
+        "correct": false
+      },
+      {
+        "text": "Mariza decided to study English at the university, but she didn’t know how to take the SAT test.",
+        "correct": false
+      },
+      {
+        "text": "Mariza was worried about being able to survive the semester at this small college.",
+        "correct": false
+      },
+      {
+        "text": "Mariza had always wanted to go to college and was thrilled when she received her acceptance letter.",
+        "correct": true
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Mariza’s Hardest Class",
+        "correct": false
+      },
+      {
+        "text": "Mariza’s Admissions Counselor",
+        "correct": false
+      },
+      {
+        "text": "Mariza Goes to College",
+        "correct": true
+      },
+      {
+        "text": "Mariza’s English Test",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "topic": "The Business Use of Unmanned Aerial Vehicles",
+    "part1": {
+      "template": "Unmanned aerial vehicles (UAVs) have not yet been {1} used in the business {2}, but may soon be. However, new technology will likely usher in the first wave of business UAVs. Already, {3} are using inexpensive battery operated UAVs to deliver packages. UAVs have also been {4} to deliver aid in emergency {5} and to collect environmental data.",
+      "blanks": [
+        {
+          "options": [
+            "widely",
+            "further",
+            "heard",
+            "to",
+            "recently"
+          ],
+          "correct": "widely"
+        },
+        {
+          "options": [
+            "quarter",
+            "world",
+            "years",
+            "fields",
+            "expansion"
+          ],
+          "correct": "world"
+        },
+        {
+          "options": [
+            "students",
+            "celebrities",
+            "companies",
+            "citizens",
+            "public"
+          ],
+          "correct": "companies"
+        },
+        {
+          "options": [
+            "made",
+            "implemented",
+            "hired",
+            "proven",
+            "used"
+          ],
+          "correct": "used"
+        },
+        {
+          "options": [
+            "order",
+            "category",
+            "situations",
+            "work",
+            "units"
+          ],
+          "correct": "situations"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "They may also be used to perform data collection or to survey forested areas for signs of fires.",
+        "correct": true
+      },
+      {
+        "text": "Drone technologies have been available, but their potential applications have not been well understood.",
+        "correct": false
+      },
+      {
+        "text": "These vehicles are used to inspect buildings that are too dangerous for human hands.",
+        "correct": false
+      },
+      {
+        "text": "Avionics refers to the science and technology of air, space, and ground vehicles.",
+        "correct": false
+      }
+    ],
+    "part2": "There are already businesses that specialize in the sale and operation of UAVs. These businesses sell the equipment and provide instruction for its safe use. Other businesses are developing their own drones for their own customized purposes.",
+    "highlightQs": [
+      {
+        "question": "How often are unmanned aerial vehicles used today?",
+        "answer": "Unmanned aerial vehicles (UAVs) have not yet been widely used in the business world"
+      },
+      {
+        "question": "What does a business that specializes in UAVs do?",
+        "answer": "sell the equipment and provide instruction for its safe use"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "Commercial drones are likely to become the next big tech investment, with many firms racing to be the primary provider.",
+        "correct": false
+      },
+      {
+        "text": "UAVs are unmanned vehicles that can be used for applications such as delivering packages or collecting data.",
+        "correct": true
+      },
+      {
+        "text": "Computer models can also be used to help robots plan surgeries and deliver packages while avoiding obstacles.",
+        "correct": false
+      },
+      {
+        "text": "UAVs are currently being evaluated and reviewed for potential regulation in order to avoid and punish misuse.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "The Commercial History of the Airplane",
+        "correct": false
+      },
+      {
+        "text": "Experiments in Aerodynamics and Flight",
+        "correct": false
+      },
+      {
+        "text": "Investments in Drone Technology",
+        "correct": false
+      },
+      {
+        "text": "The Business Use of Unmanned Aerial Vehicles",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "topic": "The Design and Functions of Architectural Structures",
+    "part1": {
+      "template": "Architecture encompasses both the {1} and construction of buildings and other physical {2}. Architects design structures {3} as homes, commercial {4}, schools, and {5}.",
+      "blanks": [
+        {
+          "options": [
+            "design",
+            "concept",
+            "addition",
+            "measurement",
+            "surveying"
+          ],
+          "correct": "design"
+        },
+        {
+          "options": [
+            "architecture",
+            "places",
+            "types",
+            "structures",
+            "designs"
+          ],
+          "correct": "structures"
+        },
+        {
+          "options": [
+            "to",
+            "or",
+            "used",
+            "in",
+            "such"
+          ],
+          "correct": "such"
+        },
+        {
+          "options": [
+            "architecture",
+            "buildings",
+            "possessions",
+            "lands",
+            "halls"
+          ],
+          "correct": "buildings"
+        },
+        {
+          "options": [
+            "people",
+            "hospitals",
+            "buildings",
+            "shells",
+            "organizations"
+          ],
+          "correct": "hospitals"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Commercial design focuses on the use of space for business functions, such as stores and offices.",
+        "correct": false
+      },
+      {
+        "text": "Consider a physical design process that can be described as follows: The designer first determines a solution to the problem or question.",
+        "correct": false
+      },
+      {
+        "text": "An architect creates a structure by using both materials and technology to meet the needs of the people who use it.",
+        "correct": true
+      },
+      {
+        "text": "Starting with the concept, the design evolves into a precise specification, which is then further refined into a set of drawings.",
+        "correct": false
+      }
+    ],
+    "part2": "This includes selecting the best materials for a structure, designing a space with good ventilation and sufficient natural light, and building energy-efficient facilities that use renewable resources such as solar or wind energy. Some buildings, such as libraries and museums offer specific services and spaces within the structure. As a result, they may have a variety of architectural styles, such as ornamented domes or arches for libraries or exhibition spaces in museums.",
+    "highlightQs": [
+      {
+        "question": "What are some aspects an architect might consider when designing a structure?",
+        "answer": "selecting the best materials for a structure, designing a space with good ventilation and sufficient natural light, and building energy- efficient facilities that use renewable resources"
+      },
+      {
+        "question": "What are some examples of elements an architect may include in a building for a specific purpose?",
+        "answer": "ornamented domes or arches for libraries or exhibition spaces in museums"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The tall narrow house is a type of architecture that originated in China.",
+        "correct": false
+      },
+      {
+        "text": "Architects will often design buildings according to popular styles both current and historical.",
+        "correct": false
+      },
+      {
+        "text": "The most common type of residential design is the single family detached house.",
+        "correct": false
+      },
+      {
+        "text": "Architects design buildings and other structures, such as schools, hospitals, and museums.",
+        "correct": true
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Modern Incorporation of Classical Architectural Design",
+        "correct": false
+      },
+      {
+        "text": "Designing Smart, Energy Efficient Buildings",
+        "correct": false
+      },
+      {
+        "text": "The Design and Functions of Architectural Structures",
+        "correct": true
+      },
+      {
+        "text": "The Preservation of Historic Buildings",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "topic": "The Role of Firefighters",
+    "part1": {
+      "template": "Firefighters are the people who fight fires on a {1} daily basis. They work for fire departments, which {2} organizations of trained professionals that keep the community {3} from fires. When a fire {4} out, firefighters enter buildings to look {5} people and pets, rescue them, and {6} out the fire to prevent {7} from spreading. They also conduct {8} drills and inspections to {9} businesses and agencies safe.",
+      "blanks": [
+        {
+          "options": [
+            "rough",
+            "non",
+            "different",
+            "practically",
+            "nearly"
+          ],
+          "correct": "nearly"
+        },
+        {
+          "options": [
+            "are",
+            "comprise",
+            "has",
+            "create",
+            "means"
+          ],
+          "correct": "are"
+        },
+        {
+          "options": [
+            "far",
+            "calm",
+            "safe",
+            "home",
+            "healthy"
+          ],
+          "correct": "safe"
+        },
+        {
+          "options": [
+            "fires",
+            "breaks",
+            "deep",
+            "sets",
+            "lights"
+          ],
+          "correct": "breaks"
+        },
+        {
+          "options": [
+            "their",
+            "past",
+            "about",
+            "for",
+            "of"
+          ],
+          "correct": "for"
+        },
+        {
+          "options": [
+            "fire",
+            "hold",
+            "heat",
+            "walk",
+            "put"
+          ],
+          "correct": "put"
+        },
+        {
+          "options": [
+            "that",
+            "disaster",
+            "it",
+            "this",
+            "life"
+          ],
+          "correct": "it"
+        },
+        {
+          "options": [
+            "fire",
+            "new",
+            "several",
+            "annual",
+            "compliance"
+          ],
+          "correct": "fire"
+        },
+        {
+          "options": [
+            "put",
+            "show",
+            "see",
+            "keep",
+            "hold"
+          ],
+          "correct": "keep"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Life in a fire department is not always exciting.",
+        "correct": false
+      },
+      {
+        "text": "Fire protection is the chief duty of a fire department.",
+        "correct": false
+      },
+      {
+        "text": "Firefighters must have a variety of skills and knowledge.",
+        "correct": true
+      },
+      {
+        "text": "A fire detection system monitors for smoke, heat, or movement.",
+        "correct": false
+      }
+    ],
+    "part2": "They must be physically fit and must be able to work in harsh conditions and difficult situations. In addition to responding to fires, firefighters often help in situations that require medical attention, such as automobile accidents and gas emergencies. In addition to physical skills and knowledge, firefighters have to have strong social skills, because they must often interact with people during stressful situations.",
+    "highlightQs": [
+      {
+        "question": "In addition to knowledge and physical fitness, what other skills are important for firefighters?",
+        "answer": "strong social skills"
+      },
+      {
+        "question": "What is the main responsibility of a fire department?",
+        "answer": "keep the community safe from fires"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "Firefighters work for fire departments, which are organizations of trained professionals who keep the community safe from fires.",
+        "correct": true
+      },
+      {
+        "text": "A fire chief is responsible for a fire department that is responsible for saving the lives and property of people in their community.",
+        "correct": false
+      },
+      {
+        "text": "Firefighters are a relatively young profession and many people in fire departments have only just begun to work as firefighters.",
+        "correct": false
+      },
+      {
+        "text": "Not every firefighter is employed full-time, which means that they fill the position only when necessary or on a part-time basis.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Smoke Detection Devices",
+        "correct": false
+      },
+      {
+        "text": "Fire Safety for Building Owners",
+        "correct": false
+      },
+      {
+        "text": "The Layout of a Fire Station",
+        "correct": false
+      },
+      {
+        "text": "The Role of Firefighters",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "topic": "Building Greener Cities through Alternative Transport",
+    "part1": {
+      "template": "As a {1} of mobility, motor vehicles have several {2} over other types of transportation, including faster commuting time and improved accessibility for rural communities. However, society’s {3} of motor vehicles has negative consequences for the planet, {4} urban sprawl, air and {5} pollution, and increased carbon emissions. This has {6} many urban planners to consider creation of alternative forms of {7}. Some people have found that cycling is a quicker and safer means of getting around the city than driving a {8}.",
+      "blanks": [
+        {
+          "options": [
+            "system",
+            "tool",
+            "driver",
+            "form",
+            "sense"
+          ],
+          "correct": "form"
+        },
+        {
+          "options": [
+            "attributes",
+            "advantages",
+            "roles",
+            "qualities",
+            "adaptations"
+          ],
+          "correct": "advantages"
+        },
+        {
+          "options": [
+            "obsession",
+            "model",
+            "use",
+            "removal",
+            "choice"
+          ],
+          "correct": "use"
+        },
+        {
+          "options": [
+            "including",
+            "notwithstanding",
+            "named",
+            "a",
+            "primary"
+          ],
+          "correct": "including"
+        },
+        {
+          "options": [
+            "fire",
+            "wind",
+            "water",
+            "space",
+            "rain"
+          ],
+          "correct": "water"
+        },
+        {
+          "options": [
+            "chided",
+            "attracted",
+            "convince",
+            "compel",
+            "led"
+          ],
+          "correct": "led"
+        },
+        {
+          "options": [
+            "sport",
+            "transportation",
+            "education",
+            "cycling",
+            "food"
+          ],
+          "correct": "transportation"
+        },
+        {
+          "options": [
+            "cow",
+            "walk",
+            "car",
+            "trolley"
+          ],
+          "correct": "car"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "One of these issues is the need to find a sustainable way to travel.",
+        "correct": false
+      },
+      {
+        "text": "Urban planners have created special lanes for cyclists to use.",
+        "correct": true
+      },
+      {
+        "text": "Sustainable transportation often includes methods that do not harm the environment.",
+        "correct": false
+      },
+      {
+        "text": "Horses and boats were, and still are, other main methods of transportation.",
+        "correct": false
+      }
+    ],
+    "part2": "Society’s reliance on motor vehicles is not likely to decrease anytime soon, but with the creation of new forms of transportation, society will be able to reduce its negative impact on the planet.",
+    "highlightQs": [
+      {
+        "question": "What are some of the disadvantages of motor vehicles?",
+        "answer": "urban sprawl, air and water pollution, and increased carbon emissions"
+      },
+      {
+        "question": "How can society reduce its negative impact on the planet?",
+        "answer": "with the creation of new forms of transportation"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "Society’s reliance on motor vehicles has negative consequences for the planet, so urban planners are proposing new forms of transportation.",
+        "correct": true
+      },
+      {
+        "text": "One way to reduce the negative impact of cars is to invest in autonomous vehicles, which will be able to better optimize transportation.",
+        "correct": false
+      },
+      {
+        "text": "Electric vehicles offer drivers much faster acceleration than internal combustion engines and help reduce pollution and carbon emissions.",
+        "correct": false
+      },
+      {
+        "text": "The development of motor vehicles has been an important part of the economy, and society’s needs for transportation have remained constant.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Food in an Ecologically Sustainable World",
+        "correct": false
+      },
+      {
+        "text": "Draft Regulations for Vehicle Emissions",
+        "correct": false
+      },
+      {
+        "text": "The Advantages of Motor Vehicles",
+        "correct": false
+      },
+      {
+        "text": "Building Greener Cities through Alternative Transport",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "topic": "Philadelphia Marathon Canceled Due to Extreme Weather",
+    "part1": {
+      "template": "Race organizers announced Monday that the Philadelphia Marathon will not be held this {1} due to the likelihood of extreme weather {2} on race day, November 19. The marathon {3} not be rescheduled, a news release {4} organizers {5}.",
+      "blanks": [
+        {
+          "options": [
+            "year",
+            "date",
+            "October",
+            "race",
+            "sadly"
+          ],
+          "correct": "year"
+        },
+        {
+          "options": [
+            "conditions",
+            "sports",
+            "marathons",
+            "rain"
+          ],
+          "correct": "conditions"
+        },
+        {
+          "options": [
+            "is",
+            "be",
+            "will",
+            "was"
+          ],
+          "correct": "will"
+        },
+        {
+          "options": [
+            "of",
+            "from",
+            "with",
+            "said"
+          ],
+          "correct": "from"
+        },
+        {
+          "options": [
+            "called",
+            "spoke",
+            "talked",
+            "had",
+            "said"
+          ],
+          "correct": "said"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "So it goes for the thousands upon thousands of people who make the Philadelphia Marathon happen each spring.",
+        "correct": false
+      },
+      {
+        "text": "The 2018 season kicked off last night with the Showcase Gala, which was held at the Palm Springs Convention Center.",
+        "correct": false
+      },
+      {
+        "text": "This past spring, Ceremony and Celebration at Mary T. Heidrick Park was the first public event of the year.",
+        "correct": false
+      },
+      {
+        "text": "Event organizers said they made the decision to cancel the race after consulting with city officials and weather experts.",
+        "correct": true
+      }
+    ],
+    "part2": "If the race were to be held, it would have started and ended in the Benjamin Franklin Parkway, with a course through Center City and parts of South Philadelphia. Organizers said runners who signed up for the marathon will be given a 100 percent refund for their entry fees, and they’ll get free entry to the Broad Street Run on May 6. The Broad Street Run has been held each May since 1970, drawing over 30,000 runners each year.",
+    "highlightQs": [
+      {
+        "question": "Why did race organizers cancel the Philadelphia Marathon?",
+        "answer": "due to the likelihood of extreme weather conditions on race day"
+      },
+      {
+        "question": "What will happen to the entry fees for the marathon?",
+        "answer": "runners who signed up for the marathon will be given a 100 percent refund for their entry fees"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The City of Philadelphia denied that it was standing in the way of a world-class race.",
+        "correct": false
+      },
+      {
+        "text": "Race organizers canceled the Philadelphia Marathon, which would have gone through Center City and South Philadelphia.",
+        "correct": true
+      },
+      {
+        "text": "The Philadelphia Marathon was scheduled to be held on September 14.",
+        "correct": false
+      },
+      {
+        "text": "The city of Philadelphia is organizing its annual Cherry Blossom Parade and Festival.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Philadelphia Marathon Canceled Due to Extreme Weather",
+        "correct": true
+      },
+      {
+        "text": "Philadelphia Marathon Announced for November",
+        "correct": false
+      },
+      {
+        "text": "Runners Desperate to Avoid Thanksgiving",
+        "correct": false
+      },
+      {
+        "text": "Race Cancellation Sparks Drama",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "topic": "Designing a Movie Set",
+    "part1": {
+      "template": "When an interior designer was called in to {1} plan a motion picture scene, {2} was very excited and nervous at the same {3}. He felt like he {4} in his own {5}.",
+      "blanks": [
+        {
+          "options": [
+            "better",
+            "I",
+            "his",
+            "me",
+            "help"
+          ],
+          "correct": "help"
+        },
+        {
+          "options": [
+            "she",
+            "they",
+            "them",
+            "he",
+            "there"
+          ],
+          "correct": "he"
+        },
+        {
+          "options": [
+            "time",
+            "people",
+            "end",
+            "person",
+            "day"
+          ],
+          "correct": "time"
+        },
+        {
+          "options": [
+            "looked",
+            "was",
+            "came",
+            "be",
+            "said"
+          ],
+          "correct": "was"
+        },
+        {
+          "options": [
+            "movie",
+            "dream",
+            "head",
+            "house"
+          ],
+          "correct": "movie"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Everyone had to be flown in from all over the country.",
+        "correct": false
+      },
+      {
+        "text": "He was thrilled that his work would be on the big screen.",
+        "correct": true
+      },
+      {
+        "text": "He left the movie with a huge smile on his face.",
+        "correct": false
+      },
+      {
+        "text": "They hired the designer because they wanted it to be perfect.",
+        "correct": false
+      }
+    ],
+    "part2": "But he was also nervous because he had to work quickly, and make decisions as quickly as possible. He had been invited to work on the film because of his distinctive yet elegant style. He was glad he could contribute to the film because the interior of the house they were using would be the main setting of the film, and his work would be seen by millions of people.",
+    "highlightQs": [
+      {
+        "question": "What role would the designer’s work play in the film?",
+        "answer": "the interior of the house they were using would be the main setting of the film"
+      },
+      {
+        "question": "What kind of style does the interior designer have?",
+        "answer": "distinctive yet elegant"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The designer was excited about working on the film, but nervous about how quickly he had to get everything ready.",
+        "correct": true
+      },
+      {
+        "text": "The designer didn’t want to admit that his designs weren’t interesting enough so he decided not to show them again.",
+        "correct": false
+      },
+      {
+        "text": "The designer needs to take advantage of the angles and framing of her set so that it appears larger than it actually is.",
+        "correct": false
+      },
+      {
+        "text": "The designer was invited to assist with the movie because he was well-known as one of the best in the world.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "The Extra Cost of Props",
+        "correct": false
+      },
+      {
+        "text": "The Terrific Start to a New Movie",
+        "correct": false
+      },
+      {
+        "text": "Designing a Movie Set",
+        "correct": true
+      },
+      {
+        "text": "Wardrobe Design for a Movie",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "topic": "Stories by the Lake: Tales of Honor",
+    "part1": {
+      "template": "In a quiet {1}, children played near a serene {2}. The water’s {3} shimmered under the warm sunlight, {4} every evening, villagers gathered to share tales of ancient {5}.",
+      "blanks": [
+        {
+          "options": [
+            "village",
+            "city",
+            "farm",
+            "countryside",
+            "office"
+          ],
+          "correct": "village"
+        },
+        {
+          "options": [
+            "mountain",
+            "lake",
+            "house",
+            "road"
+          ],
+          "correct": "lake"
+        },
+        {
+          "options": [
+            "surface",
+            "depth",
+            "shadow",
+            "edge"
+          ],
+          "correct": "surface"
+        },
+        {
+          "options": [
+            "but",
+            "and",
+            "although",
+            "furthermore",
+            "additionally"
+          ],
+          "correct": "and"
+        },
+        {
+          "options": [
+            "warriors",
+            "farmers",
+            "songs",
+            "moons"
+          ],
+          "correct": "warriors"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "However, the lake dried up one summer.",
+        "correct": false
+      },
+      {
+        "text": "The trees around the lake began to grow taller.",
+        "correct": false
+      },
+      {
+        "text": "The children often reenacted the warrior stories.",
+        "correct": true
+      },
+      {
+        "text": "The villagers built a museum near the lake.",
+        "correct": false
+      }
+    ],
+    "part2": "As years went by, the stories became a significant part of the village’s heritage, passed down through generations. The tales not only entertained but also taught valuable lessons of bravery and honor.",
+    "highlightQs": [
+      {
+        "question": "Where did the children play?",
+        "answer": "near a serene lake"
+      },
+      {
+        "question": "What did the tales teach apart from entertainment?",
+        "answer": "valuable lessons of bravery and honor"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "A village by a lake where kids swam every day.",
+        "correct": false
+      },
+      {
+        "text": "The evolution of the natural habitat around a lake.",
+        "correct": false
+      },
+      {
+        "text": "A village’s tradition of sharing warrior tales and its influence on children.",
+        "correct": true
+      },
+      {
+        "text": "A tutorial on the art of storytelling.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Lakeside Evenings: Village’s Narrative",
+        "correct": false
+      },
+      {
+        "text": "The Sunlit Lake: Nature’s Marvel",
+        "correct": false
+      },
+      {
+        "text": "The Village’s Warrior Themed Playground",
+        "correct": false
+      },
+      {
+        "text": "Stories by the Lake: Tales of Honor",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "topic": "Rainforests Under Threat: Climate and Habitat",
+    "part1": {
+      "template": "The rainforest is not only a {1} for biodiversity, but it also {2} a crucial role in regulating the Earth’s {3}. However, due to {4} and illegal logging, these ecosystems are under {5}.",
+      "blanks": [
+        {
+          "options": [
+            "home",
+            "danger",
+            "solution",
+            "replica"
+          ],
+          "correct": "home"
+        },
+        {
+          "options": [
+            "plays",
+            "gives",
+            "does",
+            "is",
+            "contributes"
+          ],
+          "correct": "plays"
+        },
+        {
+          "options": [
+            "population",
+            "technology",
+            "climate",
+            "altitude"
+          ],
+          "correct": "climate"
+        },
+        {
+          "options": [
+            "tourism",
+            "cultivation",
+            "deforestation",
+            "celebration"
+          ],
+          "correct": "deforestation"
+        },
+        {
+          "options": [
+            "ground",
+            "threat",
+            "developed",
+            "aware",
+            "there"
+          ],
+          "correct": "threat"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Despite their importance, many people remain unaware of the gravity of the situation.",
+        "correct": true
+      },
+      {
+        "text": "Shopping malls and roads have taken over the once dense jungles.",
+        "correct": false
+      },
+      {
+        "text": "The ocean also plays a role in regulating the Earth’s climate.",
+        "correct": false
+      },
+      {
+        "text": "Humans have always been dependent on the natural resources found in rainforests.",
+        "correct": false
+      }
+    ],
+    "part2": "A vast number of species rely on the rainforest for their habitat and sustenance. If these forests disappear, it could lead to the extinction of countless species and disrupt the balance of nature.",
+    "highlightQs": [
+      {
+        "question": "Why are rainforests crucial for many species?",
+        "answer": "for their habitat and sustenance"
+      },
+      {
+        "question": "What factors are causing harm to the rainforests?",
+        "answer": "deforestation and illegal logging"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The significance of roads and shopping malls in urban areas.",
+        "correct": false
+      },
+      {
+        "text": "The various species that inhabit the rainforests.",
+        "correct": false
+      },
+      {
+        "text": "The essential role rainforests play in the environment and the threats they face.",
+        "correct": true
+      },
+      {
+        "text": "How humans have always been dependent on the resources from oceans.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "A Home for All: The Biodiversity of Rainforests",
+        "correct": false
+      },
+      {
+        "text": "Rainforests Under Threat: Climate and Habitat",
+        "correct": true
+      },
+      {
+        "text": "The Global Impact of Deforestation",
+        "correct": false
+      },
+      {
+        "text": "People’s Disconnect with Nature: A Major Concern",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "topic": "Polar Bears: The Predators of the Arctic Under Threat",
+    "part1": {
+      "template": "The polar bear, native to the Arctic Circle, is the world’s {1} carnivore. It primarily feeds on {2}, but during lean times, it will consume anything it can {3}. Polar bears' thick, {4} fur and a layer of fat help them survive in freezing {5}.",
+      "blanks": [
+        {
+          "options": [
+            "largest",
+            "smallest",
+            "deadliest",
+            "fastest"
+          ],
+          "correct": "largest"
+        },
+        {
+          "options": [
+            "vegetation",
+            "berries",
+            "seals",
+            "deer"
+          ],
+          "correct": "seals"
+        },
+        {
+          "options": [
+            "find",
+            "buy",
+            "locate",
+            "retrieve"
+          ],
+          "correct": "find"
+        },
+        {
+          "options": [
+            "white",
+            "spotted",
+            "black",
+            "transparent"
+          ],
+          "correct": "white"
+        },
+        {
+          "options": [
+            "cold",
+            "times",
+            "temperatures",
+            "condition"
+          ],
+          "correct": "temperatures"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "The cubs are taught to swim at a young age by their mothers.",
+        "correct": false
+      },
+      {
+        "text": "Many tourists visit the Arctic to see these magnificent creatures in their natural habitat.",
+        "correct": true
+      },
+      {
+        "text": "The Arctic tundra is also home to several unique plant species.",
+        "correct": false
+      },
+      {
+        "text": "Polar bears often migrate to the southern regions during summer.",
+        "correct": false
+      }
+    ],
+    "part2": "However, as the climate changes and sea ice melts, these majestic creatures face the threat of losing their primary habitat. Conservation efforts are in place to ensure their survival, but global cooperation is essential to mitigate the effects of climate change.",
+    "highlightQs": [
+      {
+        "question": "Why are polar bears losing their natural home?",
+        "answer": "climate changes and sea ice melts"
+      },
+      {
+        "question": "How do polar bears survive in freezing temperatures?",
+        "answer": "Their thick, white fur and a layer of fat help"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "Tourism in the Arctic Circle is growing rapidly.",
+        "correct": false
+      },
+      {
+        "text": "Polar bears are versatile eaters and can consume a variety of foods.",
+        "correct": false
+      },
+      {
+        "text": "The Arctic Circle is changing, and this presents new challenges to native species like the polar bears.",
+        "correct": true
+      },
+      {
+        "text": "Polar bears‘ fur has unique properties that can be studied for scientific research.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Polar Bears: The Predators of the Arctic Under Threat",
+        "correct": true
+      },
+      {
+        "text": "Tourism in the Arctic: A Growing Industry",
+        "correct": false
+      },
+      {
+        "text": "The Unique Fur of the Polar Bear",
+        "correct": false
+      },
+      {
+        "text": "Arctic Survival: How Animals Adapt to Extreme Cold",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "topic": "Sunset Stories of a Quiet Village",
+    "part1": {
+      "template": "In a tranquil village, nestled among rolling {1}, children played by the banks of a {2}. While the villagers cherished their simple {3}, they often {4} at sunset to share tales of the {5} world.",
+      "blanks": [
+        {
+          "options": [
+            "huts",
+            "roads",
+            "mountains",
+            "trees"
+          ],
+          "correct": "mountains"
+        },
+        {
+          "options": [
+            "cloud",
+            "river",
+            "rain",
+            "house"
+          ],
+          "correct": "river"
+        },
+        {
+          "options": [
+            "lives",
+            "food",
+            "houses",
+            "bags"
+          ],
+          "correct": "lives"
+        },
+        {
+          "options": [
+            "gathered",
+            "assembled",
+            "ate",
+            "imbibed"
+          ],
+          "correct": "gathered"
+        },
+        {
+          "options": [
+            "elderly",
+            "colorful",
+            "quiet",
+            "outside"
+          ],
+          "correct": "outside"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Many elders had never ventured beyond their homeland, but their eyes sparkled with curiosity as they listened.",
+        "correct": true
+      },
+      {
+        "text": "For dessert, they always had fruit pies.",
+        "correct": false
+      },
+      {
+        "text": "Every child wanted a pet fish from the river.",
+        "correct": false
+      },
+      {
+        "text": "The village was known for its beautiful pottery.",
+        "correct": false
+      }
+    ],
+    "part2": "The stories, brought by wandering merchants or told by their ancestors, painted vivid pictures of distant lands. These tales became an integral part of their culture, passed down from one generation to another.",
+    "highlightQs": [
+      {
+        "question": "Who shared tales of the outside world with the villagers?",
+        "answer": "wandering merchants or told by their ancestors"
+      },
+      {
+        "question": "Where did the children of the village play?",
+        "answer": "by the banks of a river"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The importance of rivers in village life.",
+        "correct": false
+      },
+      {
+        "text": "The cultural significance of sharing tales in a village.",
+        "correct": true
+      },
+      {
+        "text": "The beauty of village life during sunset.",
+        "correct": false
+      },
+      {
+        "text": "The challenges faced by wandering merchants.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Sunset Stories of a Quiet Village",
+        "correct": true
+      },
+      {
+        "text": "A History of Merchants and Ancestors",
+        "correct": false
+      },
+      {
+        "text": "The Serenity of Village Life",
+        "correct": false
+      },
+      {
+        "text": "The Mountains, River, and Tales",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "topic": "Pollinators in Peril: The Story of Honeybees",
+    "part1": {
+      "template": "The honeybee, an insect known for its ability, is vital for {1}. As they {2} from one flower to another, they {3} pollen, enabling plants to produce fruit and seeds. Honeybees also play an essential role in {4}, producing honey that many {5} enjoy.",
+      "blanks": [
+        {
+          "options": [
+            "commerce",
+            "color",
+            "pollination",
+            "wingspan"
+          ],
+          "correct": "pollination"
+        },
+        {
+          "options": [
+            "traverse",
+            "fly",
+            "sail",
+            "coast"
+          ],
+          "correct": "fly"
+        },
+        {
+          "options": [
+            "disperse",
+            "avoid",
+            "consume",
+            "dislike"
+          ],
+          "correct": "disperse"
+        },
+        {
+          "options": [
+            "transportation",
+            "entertainment",
+            "agriculture",
+            "architecture"
+          ],
+          "correct": "agriculture"
+        },
+        {
+          "options": [
+            "people",
+            "citizens",
+            "honeybees",
+            "here"
+          ],
+          "correct": "people"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Honey is a sweet treat many relish.",
+        "correct": false
+      },
+      {
+        "text": "This is why flowers have colorful petals.",
+        "correct": false
+      },
+      {
+        "text": "Honeybees are more than just honey producers.",
+        "correct": true
+      },
+      {
+        "text": "Many use honey as a sugar substitute.",
+        "correct": false
+      }
+    ],
+    "part2": "Despite their importance, these tiny creatures face numerous threats. Pesticides, habitat loss, and diseases are some of the challenges they confront daily. Conservation efforts are underway to protect these invaluable pollinators and ensure a sustainable future for our crops.",
+    "highlightQs": [
+      {
+        "question": "What challenges do honeybees face daily?",
+        "answer": "Pesticides, habitat loss, and diseases"
+      },
+      {
+        "question": "Why are honeybees considered vital in the context of plants?",
+        "answer": "they disperse pollen, enabling plants to produce fruit and seeds"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The process of making honey.",
+        "correct": false
+      },
+      {
+        "text": "The threats faced by insects in general.",
+        "correct": false
+      },
+      {
+        "text": "The vital role of honeybees in pollination and the challenges they face.",
+        "correct": true
+      },
+      {
+        "text": "The nutritional benefits of honey.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "The Sweet World of Honey",
+        "correct": false
+      },
+      {
+        "text": "Pollinators in Peril: The Story of Honeybees",
+        "correct": true
+      },
+      {
+        "text": "Insects in Agriculture",
+        "correct": false
+      },
+      {
+        "text": "The Health Benefits of Honey",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "topic": "Trees: Pillars of Life and Culture",
+    "part1": {
+      "template": "Trees are vital components of the {1} world, providing {2} to countless species. Through photosynthesis, they absorb carbon dioxide and release {3}. Furthermore, forests, where {4} are densely packed, act as {5} against soil erosion.",
+      "blanks": [
+        {
+          "options": [
+            "natural",
+            "environment",
+            "green",
+            "our"
+          ],
+          "correct": "natural"
+        },
+        {
+          "options": [
+            "shelter",
+            "light",
+            "liquid",
+            "speed"
+          ],
+          "correct": "shelter"
+        },
+        {
+          "options": [
+            "water",
+            "oxygen",
+            "music",
+            "heat"
+          ],
+          "correct": "oxygen"
+        },
+        {
+          "options": [
+            "trees",
+            "species",
+            "carbons",
+            "components"
+          ],
+          "correct": "trees"
+        },
+        {
+          "options": [
+            "barriers",
+            "magnets",
+            "speakers",
+            "colors"
+          ],
+          "correct": "barriers"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "They also serve as recreational spaces for humans.",
+        "correct": true
+      },
+      {
+        "text": "They make up 90% of the earth’s land biomass.",
+        "correct": false
+      },
+      {
+        "text": "The number of trees has been increasing globally.",
+        "correct": false
+      },
+      {
+        "text": "Notably, many fruits consumed are from trees.",
+        "correct": false
+      }
+    ],
+    "part2": "Trees also have cultural and spiritual significance in many societies. They are often symbols of growth, life, and connectivity, with some cultures revering specific trees as sacred or as meeting points.",
+    "highlightQs": [
+      {
+        "question": "Why do forests, where trees are densely packed, play an important role in the environment?",
+        "answer": "as barriers against soil erosion"
+      },
+      {
+        "question": "What is the cultural or spiritual significance of trees in many societies?",
+        "answer": "symbols of growth, life, and connectivity, with some cultures revering specific trees as sacred or as meeting points"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The process of photosynthesis and its byproducts.",
+        "correct": false
+      },
+      {
+        "text": "The various roles and significance of trees in nature and culture.",
+        "correct": true
+      },
+      {
+        "text": "The importance of dense forests in preventing erosion.",
+        "correct": false
+      },
+      {
+        "text": "The recreational and spiritual aspects of trees.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Forests: Earth’s Natural Barriers",
+        "correct": false
+      },
+      {
+        "text": "Photosynthesis: The Breath of Trees",
+        "correct": false
+      },
+      {
+        "text": "Trees: Pillars of Life and Culture",
+        "correct": true
+      },
+      {
+        "text": "The Many Facets of Forests",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "topic": "Conservation for the Great Barrier Reef",
+    "part1": {
+      "template": "The Great Barrier Reef, although a {1} entity, is composed of over 2,900 individual structures. Spanning a {2} distance, this unique ecosystem stretches far enough to be {3} even from outer space. As a major marine habitat, it {4} a diverse range of {5} and provides them with vital resources.",
+      "blanks": [
+        {
+          "options": [
+            "man-made",
+            "natural",
+            "synthetic",
+            "artificial"
+          ],
+          "correct": "natural"
+        },
+        {
+          "options": [
+            "vast",
+            "big",
+            "wide",
+            "strange"
+          ],
+          "correct": "vast"
+        },
+        {
+          "options": [
+            "invisible",
+            "audible",
+            "detectable",
+            "concealed"
+          ],
+          "correct": "detectable"
+        },
+        {
+          "options": [
+            "houses",
+            "incorporates",
+            "is",
+            "containing"
+          ],
+          "correct": "houses"
+        },
+        {
+          "options": [
+            "plants",
+            "vehicles",
+            "buildings",
+            "colors"
+          ],
+          "correct": "plants"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Many tourists take boat rides to get a closer look.",
+        "correct": false
+      },
+      {
+        "text": "This reef is particularly famous for its vibrant colors.",
+        "correct": false
+      },
+      {
+        "text": "Divers often explore the deeper regions of this reef.",
+        "correct": false
+      },
+      {
+        "text": "It’s imperative to implement conservation measures for its protection.",
+        "correct": true
+      }
+    ],
+    "part2": "Regrettably, due to certain human activities, parts of the reef face challenges. If not addressed, the health and vitality of this marine wonder are in jeopardy.",
+    "highlightQs": [
+      {
+        "question": "What is the Great Barrier Reef made up of?",
+        "answer": "over 2,900 individual structures"
+      },
+      {
+        "question": "What is a consequence if the challenges faced by the reef are not addressed?",
+        "answer": "the health and vitality of this marine wonder are in jeopardy"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The structures and size of the Great Barrier Reef.",
+        "correct": false
+      },
+      {
+        "text": "The methods to view the beauty of the Great Barrier Reef.",
+        "correct": false
+      },
+      {
+        "text": "The urgent need for protection and conservation of the Great Barrier Reef.",
+        "correct": true
+      },
+      {
+        "text": "The recreational activities around the Great Barrier Reef.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "The Great Barrier Reef: A Space-Visible Marvel",
+        "correct": false
+      },
+      {
+        "text": "Conservation for the Great Barrier Reef",
+        "correct": true
+      },
+      {
+        "text": "Exploring the Depths of the Great Barrier Reef",
+        "correct": false
+      },
+      {
+        "text": "From Space to Sea: The Wonders of the Great Barrier Reef",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "topic": "The Pollinating Wonders: Hummingbirds",
+    "part1": {
+      "template": "The hummingbird, despite its tiny size, possesses a remarkable {1} that allows it to hover in mid-air. These birds are also known for their vibrant {2} and rapid wing beats, often {3} up to 80 times per second. Nectar from flowers is their primary {4} source, providing them the energy {5} need to maintain their fast-paced lifestyle.",
+      "blanks": [
+        {
+          "options": [
+            "engine",
+            "mechanism",
+            "battery",
+            "trick"
+          ],
+          "correct": "mechanism"
+        },
+        {
+          "options": [
+            "scent",
+            "sound",
+            "color",
+            "temperature"
+          ],
+          "correct": "color"
+        },
+        {
+          "options": [
+            "reaching",
+            "revolving",
+            "moving",
+            "in"
+          ],
+          "correct": "reaching"
+        },
+        {
+          "options": [
+            "enemy",
+            "home",
+            "food",
+            "shelter"
+          ],
+          "correct": "food"
+        },
+        {
+          "options": [
+            "they",
+            "that",
+            "it",
+            "which"
+          ],
+          "correct": "they"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Moreover, they sing beautifully during the rainy season.",
+        "correct": false
+      },
+      {
+        "text": "Despite their speed, they have a keen sense of direction.",
+        "correct": false
+      },
+      {
+        "text": "Their beaks are perfectly adapted for extracting nectar.",
+        "correct": false
+      },
+      {
+        "text": "Many plant species rely heavily on hummingbirds for pollination.",
+        "correct": true
+      }
+    ],
+    "part2": "Their agility makes them efficient pollinators, as they move from one blossom to the next with ease. In doing so, they play a crucial role in the reproduction of many plant species. Without these tiny aviators, many plants would struggle to reproduce.",
+    "highlightQs": [
+      {
+        "question": "What is the hummingbird's main contribution to the ecosystem?",
+        "answer": "Nectar from flowers"
+      },
+      {
+        "question": "What characteristic of hummingbirds makes them effective at pollinating plants?",
+        "answer": "they play a crucial role in the reproduction of many plant species"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The speed at which hummingbirds beat their wings.",
+        "correct": false
+      },
+      {
+        "text": "The unique qualities and significance of hummingbirds in nature.",
+        "correct": true
+      },
+      {
+        "text": "How hummingbirds extract nectar from flowers.",
+        "correct": false
+      },
+      {
+        "text": "The different types of foods consumed by birds.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "The Hovering Marvels of the Rainforest",
+        "correct": false
+      },
+      {
+        "text": "Birds and Their Energetic Lives",
+        "correct": false
+      },
+      {
+        "text": "The Pollinating Wonders: Hummingbirds",
+        "correct": true
+      },
+      {
+        "text": "Flapping Wings: Bird Behaviors",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "topic": "Unity in Harvest: The Village Festival",
+    "part1": {
+      "template": "During the {1} harvest festival, villagers gathered to celebrate the {2} of their hard work. Children played with {3} toys, while adults shared stories of the {4} season’s challenges and successes. The scent of freshly {5} pies wafted through the air, making everyone’s mouth {6}.",
+      "blanks": [
+        {
+          "options": [
+            "annual",
+            "weekly",
+            "year",
+            "fun"
+          ],
+          "correct": "annual"
+        },
+        {
+          "options": [
+            "fruits",
+            "photos",
+            "glimpses",
+            "stories"
+          ],
+          "correct": "fruits"
+        },
+        {
+          "options": [
+            "broken",
+            "digital",
+            "tall",
+            "traditional"
+          ],
+          "correct": "traditional"
+        },
+        {
+          "options": [
+            "past",
+            "long",
+            "short",
+            "historic"
+          ],
+          "correct": "past"
+        },
+        {
+          "options": [
+            "cold",
+            "torn",
+            "baked",
+            "muddy"
+          ],
+          "correct": "baked"
+        },
+        {
+          "options": [
+            "run",
+            "water",
+            "salivation",
+            "ready"
+          ],
+          "correct": "water"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "It was clear that this event was not about the fruits.",
+        "correct": false
+      },
+      {
+        "text": "Interestingly, there were no apples for sale.",
+        "correct": false
+      },
+      {
+        "text": "Old rivalries were forgotten in these moments of unity.",
+        "correct": true
+      },
+      {
+        "text": "The city’s mayor was conspicuously absent.",
+        "correct": false
+      }
+    ],
+    "part2": "The laughter and joy resonated in the open fields, as people danced to the rhythm of the live band. As the sun set, a large bonfire was lit, around which everyone gathered, singing songs of gratitude and hope.",
+    "highlightQs": [
+      {
+        "question": "What did the children do during the festival?",
+        "answer": "Children played with traditional toys"
+      },
+      {
+        "question": "What did the villagers do as the sun set?",
+        "answer": "a large bonfire was lit, around which everyone gathered, singing songs of gratitude and hope"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The importance of food at festivals.",
+        "correct": false
+      },
+      {
+        "text": "The village’s deep-rooted rivalries.",
+        "correct": false
+      },
+      {
+        "text": "The joyous celebration of the annual harvest.",
+        "correct": true
+      },
+      {
+        "text": "The significance of singing during celebrations.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Oranges and Play: Village Celebrations",
+        "correct": false
+      },
+      {
+        "text": "Dancing into the Night: A Village Tale",
+        "correct": false
+      },
+      {
+        "text": "Unity in Harvest: The Village Festival",
+        "correct": true
+      },
+      {
+        "text": "Stories of the Past, Songs of the Future",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "topic": "Soaring with History",
+    "part1": {
+      "template": "Amelia looked at the clear {1} sky and wished she could fly. Remembering the {2} her grandmother gave her, she rushed indoors. It was an antique {3} with intricate designs that once belonged to her great-grandfather. {4} time Amelia looked at it, she felt a strong {5} to her past.",
+      "blanks": [
+        {
+          "options": [
+            "red",
+            "wooden",
+            "wet",
+            "blue"
+          ],
+          "correct": "blue"
+        },
+        {
+          "options": [
+            "gift",
+            "food",
+            "song",
+            "movie"
+          ],
+          "correct": "gift"
+        },
+        {
+          "options": [
+            "fridge",
+            "compass",
+            "book",
+            "dress"
+          ],
+          "correct": "compass"
+        },
+        {
+          "options": [
+            "Every",
+            "One",
+            "When",
+            "What"
+          ],
+          "correct": "Every"
+        },
+        {
+          "options": [
+            "connection",
+            "aversion",
+            "indifference",
+            "fragrance"
+          ],
+          "correct": "connection"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "However, the compass was just a decorative piece.",
+        "correct": false
+      },
+      {
+        "text": "The compass was a symbol of her family’s legacy of exploration.",
+        "correct": true
+      },
+      {
+        "text": "Amelia’s cat knocked the compass off the table.",
+        "correct": false
+      },
+      {
+        "text": "Many said that such desires were not meant for young women.",
+        "correct": false
+      }
+    ],
+    "part2": "But as she grew older, Amelia wanted more than just stories; she yearned to embark on her own adventures. Inspired by the compass, she decided to take flying lessons. The first time she soared above the clouds, Amelia felt like she was touching history, a living continuation of her family’s passion for exploration.",
+    "highlightQs": [
+      {
+        "question": "What gift did Amelia’s grandmother give her?",
+        "answer": "an antique compass with intricate designs that once belonged to her great-grandfather"
+      },
+      {
+        "question": "What did Amelia decide to do, inspired by the compass?",
+        "answer": "take flying lessons"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The importance of family heirlooms.",
+        "correct": false
+      },
+      {
+        "text": "Amelia’s passion for sky gazing.",
+        "correct": false
+      },
+      {
+        "text": "The challenges Amelia faced while learning to fly.",
+        "correct": false
+      },
+      {
+        "text": "Amelia’s journey of connecting with her family’s legacy through flying.",
+        "correct": true
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Soaring with History",
+        "correct": true
+      },
+      {
+        "text": "The Antique Table",
+        "correct": false
+      },
+      {
+        "text": "Amelia’s Flight School Adventures",
+        "correct": false
+      },
+      {
+        "text": "The Blue Sky",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "topic": "Memories Beneath the Bed",
+    "part1": {
+      "template": "Marina gazed out the window, noticing the {1} clouds drifting by. They {2} her of the cotton candy she {3} as a child at the county fair. With a soft sigh, she remembered the {4} when life was simpler and {5} were fewer.",
+      "blanks": [
+        {
+          "options": [
+            "white",
+            "noisy",
+            "transparent",
+            "hard"
+          ],
+          "correct": "white"
+        },
+        {
+          "options": [
+            "reminded",
+            "notified",
+            "encouraged",
+            "though"
+          ],
+          "correct": "reminded"
+        },
+        {
+          "options": [
+            "loathed",
+            "ate",
+            "played",
+            "painted"
+          ],
+          "correct": "ate"
+        },
+        {
+          "options": [
+            "period",
+            "fun",
+            "days",
+            "enjoyment"
+          ],
+          "correct": "days"
+        },
+        {
+          "options": [
+            "toys",
+            "worries",
+            "cars",
+            "games"
+          ],
+          "correct": "worries"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "She remembered playing hopscotch with her friends.",
+        "correct": false
+      },
+      {
+        "text": "It began to rain and she opened her umbrella.",
+        "correct": false
+      },
+      {
+        "text": "The cotton candy was her least favorite treat.",
+        "correct": false
+      },
+      {
+        "text": "It had been a long time since she last visited the fair.",
+        "correct": true
+      }
+    ],
+    "part2": "Taking a deep breath, Marina decided it was time to revisit some of those cherished memories. She pulled out an old photo album from beneath her bed, each picture narrating a tale from the past. Flipping through the pages, she felt a mixture of nostalgia and happiness.",
+    "highlightQs": [
+      {
+        "question": "What did the white clouds remind Marina of?",
+        "answer": "the cotton candy she ate as a child at the county fair"
+      },
+      {
+        "question": "What did Marina decide to do to revisit her cherished memories?",
+        "answer": "She pulled out an old photo album from beneath her bed"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The importance of taking breaks and looking outside.",
+        "correct": false
+      },
+      {
+        "text": "Marina’s distaste for cotton candy.",
+        "correct": false
+      },
+      {
+        "text": "The beauty of white clouds and their various shapes.",
+        "correct": false
+      },
+      {
+        "text": "Marina’s journey down memory lane and her connection to the past.",
+        "correct": true
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Cloudy Day Musings",
+        "correct": false
+      },
+      {
+        "text": "Memories Beneath the Bed",
+        "correct": true
+      },
+      {
+        "text": "The Tales of Cotton Candy",
+        "correct": false
+      },
+      {
+        "text": "Sweet Embrace",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "topic": "Destination: Nature’s Heart",
+    "part1": {
+      "template": "Martha gazed at the vast {1} beneath her. She could hear the distant sound of {2} chirping and the rustling of {3}. Her heart filled with joy, realizing she had finally reached her {4} after a long {5}.",
+      "blanks": [
+        {
+          "options": [
+            "city",
+            "ocean",
+            "forest",
+            "desert"
+          ],
+          "correct": "forest"
+        },
+        {
+          "options": [
+            "cars",
+            "children",
+            "birds",
+            "water"
+          ],
+          "correct": "birds"
+        },
+        {
+          "options": [
+            "paper",
+            "animals",
+            "sound",
+            "leaves"
+          ],
+          "correct": "leaves"
+        },
+        {
+          "options": [
+            "home",
+            "destination",
+            "school",
+            "friend"
+          ],
+          "correct": "destination"
+        },
+        {
+          "options": [
+            "journey",
+            "walk",
+            "distance",
+            "time"
+          ],
+          "correct": "journey"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Martha had hiked through the narrow forest paths for more than ten miles and her feet were sore.",
+        "correct": true
+      },
+      {
+        "text": "Martha stopped to rest before continuing her hike.",
+        "correct": false
+      },
+      {
+        "text": "The chirping birds were a pleasant change from the city noise.",
+        "correct": false
+      },
+      {
+        "text": "Her brother had once told her about this place.",
+        "correct": false
+      }
+    ],
+    "part2": "She decided to set up a camp near a clear stream, hoping to rest and rejuvenate. The forest seemed welcoming, and the melodies of the creatures within were a symphony to her ears.",
+    "highlightQs": [
+      {
+        "question": "Where did Martha decide to set up camp?",
+        "answer": "near a clear stream"
+      },
+      {
+        "question": "How did Martha feel when she realized she had reached her destination?",
+        "answer": "Her heart filled with joy"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The various sounds of the forest.",
+        "correct": false
+      },
+      {
+        "text": "Martha’s journey to find a clear stream.",
+        "correct": false
+      },
+      {
+        "text": "Martha’s feeling of accomplishment after reaching camp.",
+        "correct": true
+      },
+      {
+        "text": "Setting up a campsite for rejuvenation.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "The Lonely Forest",
+        "correct": false
+      },
+      {
+        "text": "Marza’s Long Journey",
+        "correct": false
+      },
+      {
+        "text": "The Melodies of the Jungle Creatures",
+        "correct": false
+      },
+      {
+        "text": "Destination: Nature’s Heart",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "topic": "Animal Journeys: Patterns and Purposes of Migration",
+    "part1": {
+      "template": "During the warmest months of the year, many animals embark on long and challenging {1}. While some animals travel in search of {2}, others migrate to find a suitable {3}. These journeys, often covering vast {4}, showcase the incredible resilience and determination of the {5} kingdom.",
+      "blanks": [
+        {
+          "options": [
+            "meals",
+            "journeys",
+            "sounds",
+            "flowers"
+          ],
+          "correct": "journeys"
+        },
+        {
+          "options": [
+            "adventure",
+            "food",
+            "jewelry",
+            "stories"
+          ],
+          "correct": "food"
+        },
+        {
+          "options": [
+            "mate",
+            "friend",
+            "partner",
+            "enemy"
+          ],
+          "correct": "mate"
+        },
+        {
+          "options": [
+            "distances",
+            "colors",
+            "melodies",
+            "stories"
+          ],
+          "correct": "distances"
+        },
+        {
+          "options": [
+            "natural",
+            "animal",
+            "local",
+            "green"
+          ],
+          "correct": "animal"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "The vastness of space has always fascinated humans.",
+        "correct": false
+      },
+      {
+        "text": "Migration can be seen in all parts of the world.",
+        "correct": true
+      },
+      {
+        "text": "The significance of music in human culture is undeniable.",
+        "correct": false
+      },
+      {
+        "text": "Some birds prefer to remain stationary throughout the year.",
+        "correct": false
+      }
+    ],
+    "part2": "For instance, the Arctic tern travels over 25,000 miles from its Arctic breeding grounds to the Antarctic coast. The monarch butterfly, on the other hand, moves across North America to escape the cold winters and lay its eggs in warmer regions.",
+    "highlightQs": [
+      {
+        "question": "How far does the Arctic tern travel during its migration?",
+        "answer": "over 25,000 miles"
+      },
+      {
+        "question": "Why does the monarch butterfly migrate across North America?",
+        "answer": "to escape the cold winters and lay its eggs in warmer regions"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The eating habits of various animals.",
+        "correct": false
+      },
+      {
+        "text": "The patterns and reasons animals migrate.",
+        "correct": true
+      },
+      {
+        "text": "How animals communicate.",
+        "correct": false
+      },
+      {
+        "text": "The habitats of animals in North America.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Migration Mysteries",
+        "correct": false
+      },
+      {
+        "text": "Arctic Adventures: A Tale of Terns",
+        "correct": false
+      },
+      {
+        "text": "Animal Journeys: Patterns and Purposes of Migration",
+        "correct": true
+      },
+      {
+        "text": "The Cold Retreat of the Monarch Butterfly",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "topic": "The Scent of Sunset",
+    "part1": {
+      "template": "Carla gazed at the {1} skies, taking in the soft glow of the setting {2}. She had always found solace in such moments, away from the hustle and {3} of the city. Today, more than ever, she felt a {4} connection to the {5} world around her.",
+      "blanks": [
+        {
+          "options": [
+            "murky",
+            "blue",
+            "clouded",
+            "metallic"
+          ],
+          "correct": "blue"
+        },
+        {
+          "options": [
+            "moon",
+            "star",
+            "sun",
+            "lamp"
+          ],
+          "correct": "sun"
+        },
+        {
+          "options": [
+            "bustle",
+            "laugh",
+            "sound",
+            "wave"
+          ],
+          "correct": "bustle"
+        },
+        {
+          "options": [
+            "deep",
+            "big",
+            "hard",
+            "nice"
+          ],
+          "correct": "deep"
+        },
+        {
+          "options": [
+            "artificial",
+            "noisy",
+            "natural",
+            "built"
+          ],
+          "correct": "natural"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "As a child, she would often sketch birds.",
+        "correct": false
+      },
+      {
+        "text": "Cars sped by, honking loudly.",
+        "correct": false
+      },
+      {
+        "text": "The tall buildings obstructed her view.",
+        "correct": false
+      },
+      {
+        "text": "The sound of distant chirping birds reached her ears.",
+        "correct": true
+      }
+    ],
+    "part2": "After a few minutes of serene contemplation, a soft breeze ruffled her hair, bringing with it the scent of blooming flowers. A smile played on her lips as she closed her eyes, allowing herself to be fully immersed in the moment.",
+    "highlightQs": [
+      {
+        "question": "What did the soft breeze bring with it?",
+        "answer": "the scent of blooming flowers"
+      },
+      {
+        "question": "What did Carla do after feeling the soft breeze?",
+        "answer": "be fully immersed in the moment"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "Carla’s dislike for the city.",
+        "correct": false
+      },
+      {
+        "text": "Carla’s deep connection with nature.",
+        "correct": true
+      },
+      {
+        "text": "The various sounds of the city.",
+        "correct": false
+      },
+      {
+        "text": "The importance of blooming flowers.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "City Skylines and Blue Skies",
+        "correct": false
+      },
+      {
+        "text": "Nature’s Embrace: Clare’s Moment",
+        "correct": false
+      },
+      {
+        "text": "Birds and Blooms: A Tale of a City",
+        "correct": false
+      },
+      {
+        "text": "The Scent of Sunset",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 32,
+    "topic": "Tales from the Deep",
+    "part1": {
+      "template": "In the dimly lit {1} of the museum, an ancient {2} lay, encased in protective glass. Its intricate engravings told tales of {3} and adventures, drawing the {4} of all who passed by. Scholars believe this artifact holds secrets to a long-lost {5}.",
+      "blanks": [
+        {
+          "options": [
+            "cafe",
+            "hallways",
+            "garden",
+            "chamber"
+          ],
+          "correct": "chamber"
+        },
+        {
+          "options": [
+            "statue",
+            "map",
+            "vase",
+            "cat"
+          ],
+          "correct": "map"
+        },
+        {
+          "options": [
+            "heroes",
+            "farmers",
+            "merchants",
+            "builders"
+          ],
+          "correct": "heroes"
+        },
+        {
+          "options": [
+            "look",
+            "gazes",
+            "eyes",
+            "attention"
+          ],
+          "correct": "attention"
+        },
+        {
+          "options": [
+            "civilization",
+            "treasures",
+            "art",
+            "weapon"
+          ],
+          "correct": "civilization"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "The museum was closed on Sundays.",
+        "correct": false
+      },
+      {
+        "text": "The lights above flickered momentarily.",
+        "correct": false
+      },
+      {
+        "text": "Next to it was a modern rendition of the city.",
+        "correct": false
+      },
+      {
+        "text": "It was rumored to have been found in a shipwreck.",
+        "correct": true
+      }
+    ],
+    "part2": "Tourists and historians alike would often crowd around, eager to decipher the mysteries held within its lines and symbols. The curator, an elderly man with vast knowledge, would often share legends associated with the map, enthralling his audience.",
+    "highlightQs": [
+      {
+        "question": "How did the ancient map attract the attention of visitors?",
+        "answer": "Its intricate engravings told tales of heroes and adventures"
+      },
+      {
+        "question": "Who shared legends associated with the map?",
+        "answer": "The curator, an elderly man with vast knowledge"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The curator’s vast knowledge about various artifacts.",
+        "correct": false
+      },
+      {
+        "text": "The mysterious origins and stories of the ancient map.",
+        "correct": true
+      },
+      {
+        "text": "The daily routine of the museum’s staff.",
+        "correct": false
+      },
+      {
+        "text": "Tourists’ fascination with the museum’s architecture.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "The Museum’s Best-Kept Secret",
+        "correct": false
+      },
+      {
+        "text": "Tales from the Deep",
+        "correct": true
+      },
+      {
+        "text": "The Curator’s Chronicles",
+        "correct": false
+      },
+      {
+        "text": "Decoding History: A Day at the Museum",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "topic": "Urban Oasis: The Rooftop Retreat",
+    "part1": {
+      "template": "Amidst the hustle and bustle of the city, the {1} cafe became a sanctuary for many. Patrons from all walks of {2} would find solace in its quiet corners, sipping their favorite {3} while watching the world pass by. The owner, Ms. Amelia, often {4} her cafe was a {5} for souls seeking rest.",
+      "blanks": [
+        {
+          "options": [
+            "windowless",
+            "rooftop",
+            "mobile",
+            "portable"
+          ],
+          "correct": "rooftop"
+        },
+        {
+          "options": [
+            "age",
+            "profession",
+            "life",
+            "town"
+          ],
+          "correct": "life"
+        },
+        {
+          "options": [
+            "pastry",
+            "tea",
+            "book",
+            "song"
+          ],
+          "correct": "tea"
+        },
+        {
+          "options": [
+            "said",
+            "exclaimed",
+            "told",
+            "solace"
+          ],
+          "correct": "said"
+        },
+        {
+          "options": [
+            "maze",
+            "haven",
+            "puzzle",
+            "hurdle"
+          ],
+          "correct": "haven"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "On weekdays, office workers from local businesses hurried past on their way to and from work.",
+        "correct": true
+      },
+      {
+        "text": "The tea was sourced from different countries.",
+        "correct": false
+      },
+      {
+        "text": "Amelia had always dreamt of flying.",
+        "correct": false
+      },
+      {
+        "text": "The menu changed every month.",
+        "correct": false
+      }
+    ],
+    "part2": "On weekends, the cafe would often host local musicians, filling the space with melodies that echoed the heartbeat of the city. Regulars appreciated the sense of community the cafe fostered, and newcomers were always welcomed with open arms.",
+    "highlightQs": [
+      {
+        "question": "What happened at the cafe on Saturdays and Sundays?",
+        "answer": "the cafe would often host local musicians, filling the space with melodies"
+      },
+      {
+        "question": "How did regular patrons feel about the cafe?",
+        "answer": "Regulars appreciated the sense of community the cafe fostered"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The architectural beauty of skyscrapers in the city.",
+        "correct": false
+      },
+      {
+        "text": "The therapeutic benefits of tea.",
+        "correct": false
+      },
+      {
+        "text": "The welcoming ambiance and community of a rooftop cafe.",
+        "correct": true
+      },
+      {
+        "text": "The musical talents of local city musicians.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Urban Oasis: The Rooftop Retreat",
+        "correct": true
+      },
+      {
+        "text": "Teatime Amongst Skyscrapers",
+        "correct": false
+      },
+      {
+        "text": "Melodies in the Metropolitan",
+        "correct": false
+      },
+      {
+        "text": "A Sanctuary in the Sky",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "topic": "The Smartphone Era: Beyond Calls and Texts",
+    "part1": {
+      "template": "Modern smartphones are marvels of {1} engineering, cramming {2} components into compact devices. These phones not only facilitate communication, but also serve as {3}, cameras, and even portable {4}. However, with increasing complexity comes the need for more robust power {5}, leading manufacturers to invest heavily in battery {6}.",
+      "blanks": [
+        {
+          "options": [
+            "architectural",
+            "environmental",
+            "mechanical",
+            "electronic"
+          ],
+          "correct": "electronic"
+        },
+        {
+          "options": [
+            "numerous",
+            "multitude",
+            "some",
+            "assortments"
+          ],
+          "correct": "numerous"
+        },
+        {
+          "options": [
+            "music players",
+            "typewriters",
+            "ovens",
+            "sewing"
+          ],
+          "correct": "music players"
+        },
+        {
+          "options": [
+            "workshops",
+            "vehicles",
+            "offices",
+            "greenhouses"
+          ],
+          "correct": "offices"
+        },
+        {
+          "options": [
+            "memory",
+            "screens",
+            "sources",
+            "buttons"
+          ],
+          "correct": "sources"
+        },
+        {
+          "options": [
+            "science",
+            "technology",
+            "nodes",
+            "phones"
+          ],
+          "correct": "technology"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Most people prefer older models of smartphones.",
+        "correct": false
+      },
+      {
+        "text": "Many smartphones now come with built-in projectors.",
+        "correct": false
+      },
+      {
+        "text": "High-resolution screens are one of the most power-hungry of these devices.",
+        "correct": true
+      },
+      {
+        "text": "They now come in many different colors, including blue, orange, yellow, black and red.",
+        "correct": false
+      }
+    ],
+    "part2": "Their displays have advanced tremendously, offering crystal clear images and touch- sensitive interfaces. With the rise of 5G technology, smartphones are now capable of lightning-fast data transmission, making tasks like streaming high-definition videos a breeze. However, the continuous quest for innovation keeps driving the industry forward, promising even more groundbreaking features in the years to come.",
+    "highlightQs": [
+      {
+        "question": "What are the features of smart phone displays?",
+        "answer": "crystal clear images and touch sensitive interfaces"
+      },
+      {
+        "question": "What will be the key driver of new smartphone features in the future?",
+        "answer": "the continuous quest for innovation"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The history of electronic engineering.",
+        "correct": false
+      },
+      {
+        "text": "The rapid advancement and capabilities of modern smartphones.",
+        "correct": true
+      },
+      {
+        "text": "The significance of 5G technology in isolation.",
+        "correct": false
+      },
+      {
+        "text": "The evolution of touch-sensitive interfaces.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "A Glimpse into Electronic Engineering",
+        "correct": false
+      },
+      {
+        "text": "The Smartphone Era: Beyond Calls and Texts",
+        "correct": true
+      },
+      {
+        "text": "5G: The Future of Communication",
+        "correct": false
+      },
+      {
+        "text": "Touchscreens: The Magic of Communication",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "topic": "Life and Legacy: The Sahara’s Untold Stories",
+    "part1": {
+      "template": "Despite its arid {1}, the Sahara Desert teems with life. Many animals, such as the fennec fox and the dromedary {2}, have adapted to the harsh conditions, seeking {3} during the day and emerging at night when temperatures are cooler. While it may seem barren, the {4} is actually home to a diverse range of {5} and flora.",
+      "blanks": [
+        {
+          "options": [
+            "climate",
+            "population",
+            "vegetation",
+            "altitude"
+          ],
+          "correct": "climate"
+        },
+        {
+          "options": [
+            "camel",
+            "penguin",
+            "kangaroo",
+            "dolphin"
+          ],
+          "correct": "camel"
+        },
+        {
+          "options": [
+            "water",
+            "shelter",
+            "prey",
+            "sunlight"
+          ],
+          "correct": "shelter"
+        },
+        {
+          "options": [
+            "desert",
+            "location",
+            "vicinity",
+            "conditions"
+          ],
+          "correct": "desert"
+        },
+        {
+          "options": [
+            "minerals",
+            "toys",
+            "fauna",
+            "artifacts"
+          ],
+          "correct": "fauna"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "The desert’s shifting sands can be a mesmerizing sight.",
+        "correct": false
+      },
+      {
+        "text": "Plants in the desert include cacti and a few types of grasses.",
+        "correct": false
+      },
+      {
+        "text": "The Sahara covers a significant portion of multiple African countries.",
+        "correct": true
+      },
+      {
+        "text": "Snowfall is a common occurrence in the desert during winter.",
+        "correct": false
+      }
+    ],
+    "part2": "Over the years, humans have also found ways to inhabit this vast landscape, with nomadic tribes relying on ancient wells and oases. These oases, often seen as miraculous patches of green in the sandy expanse, play a crucial role in supporting both human and animal life. Trade routes, like the historic trans-Saharan trade, have also left their mark, creating a rich tapestry of culture and history in the region.",
+    "highlightQs": [
+      {
+        "question": "What do nomadic tribes rely on in the Sahara Desert for sustenance?",
+        "answer": "ancient wells and oases"
+      },
+      {
+        "question": "What have the trade routes in the Sahara Desert contributed to?",
+        "answer": "creating a rich tapestry of culture and history"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The various plants of the Sahara Desert.",
+        "correct": false
+      },
+      {
+        "text": "The importance of water sources in arid climates.",
+        "correct": false
+      },
+      {
+        "text": "The rich ecosystem and cultural history of the Sahara Desert.",
+        "correct": true
+      },
+      {
+        "text": "The economic significance of the Sahara’s natural resources.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "The Green Spots of the Sahara",
+        "correct": false
+      },
+      {
+        "text": "Life and Legacy: The Sahara’s Untold Stories",
+        "correct": true
+      },
+      {
+        "text": "The Trade Paths of Ancient Africa",
+        "correct": false
+      },
+      {
+        "text": "Oasis: The Lifeline of the Desert",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "topic": "The Internet: Humanity’s Double-Edged Sword",
+    "part1": {
+      "template": "The advent of the {1} has revolutionized the way humans communicate and {2} information. Before its widespread use, people relied on {3} and telegraphs to convey messages over long distances. Today, with a few {4} on a device, individuals can instantly connect with others, share {5}, or even purchase products online. This {6} has significantly impacted businesses, education, and social {7} worldwide.",
+      "blanks": [
+        {
+          "options": [
+            "bicycle",
+            "television",
+            "internet",
+            "printing press"
+          ],
+          "correct": "internet"
+        },
+        {
+          "options": [
+            "access",
+            "read",
+            "skim",
+            "develop"
+          ],
+          "correct": "access"
+        },
+        {
+          "options": [
+            "emails",
+            "letters",
+            "texts",
+            "holograms"
+          ],
+          "correct": "letters"
+        },
+        {
+          "options": [
+            "buttons",
+            "words",
+            "taps",
+            "selects"
+          ],
+          "correct": "taps"
+        },
+        {
+          "options": [
+            "coins",
+            "memories",
+            "photographs",
+            "secrets"
+          ],
+          "correct": "photographs"
+        },
+        {
+          "options": [
+            "transformation",
+            "alteration",
+            "continuity",
+            "link"
+          ],
+          "correct": "transformation"
+        },
+        {
+          "options": [
+            "isolation",
+            "monuments",
+            "interaction",
+            "landscapes"
+          ],
+          "correct": "interaction"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Mobile phones have become obsolete due to the internet’s prevalence.",
+        "correct": false
+      },
+      {
+        "text": "Most people now use the internet for entertainment rather than for research.",
+        "correct": false
+      },
+      {
+        "text": "However, this technology is not without its drawbacks.",
+        "correct": true
+      },
+      {
+        "text": "Few people recognize the importance of the internet in today’s society.",
+        "correct": false
+      }
+    ],
+    "part2": "The internet’s rapid spread has also given rise to concerns about privacy, misinformation, and digital dependency. Nevertheless, the internet has provided a platform for innovation, from groundbreaking medical research shared across continents to the rise of global online communities. Its profound influence will likely shape the trajectory of humanity for years to come.",
+    "highlightQs": [
+      {
+        "question": "What concerns have arisen due to the rapid spread of the internet?",
+        "answer": "privacy, misinformation, and digital dependency"
+      },
+      {
+        "question": "What kinds of activities and opportunities has the internet enabled?",
+        "answer": "the internet as provided a platform for innovation, from groundbreaking medical research shared across continents to the rise of global online communities"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The dwindling importance of the internet in modern society.",
+        "correct": false
+      },
+      {
+        "text": "The evolution of communication methods over time.",
+        "correct": false
+      },
+      {
+        "text": "The multifaceted impact of the internet on society, both positive and negative.",
+        "correct": true
+      },
+      {
+        "text": "The global decline in medical research due to the internet.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Letters and Telegraphs: The Golden Age of Communication",
+        "correct": false
+      },
+      {
+        "text": "The Dangers of Digital Dependency",
+        "correct": false
+      },
+      {
+        "text": "The Heart of Modern Interaction",
+        "correct": false
+      },
+      {
+        "text": "The Internet: Humanity’s Double-Edged Sword",
+        "correct": true
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "topic": "Streets of the Future: New Haven’s EcoCabs",
+    "part1": {
+      "template": "On the bustling streets of New Haven, Connecticut, a new technological {1} is taking the city by storm. “EcoCabs,” as they’re affectionately known, are {2} vehicles that run entirely on solar power. Local business owner, Jamie Torres, launched the {3} last year, aiming to reduce the city’s carbon {4} while offering an eco-friendly transportation alternative. Within just a year, over 50 of these green taxis have hit the {5}, receiving praise from residents and environmentalists {6}.",
+      "blanks": [
+        {
+          "options": [
+            "disturbance",
+            "fad",
+            "cuisine",
+            "challenge"
+          ],
+          "correct": "fad"
+        },
+        {
+          "options": [
+            "air",
+            "water",
+            "sustainable",
+            "space"
+          ],
+          "correct": "sustainable"
+        },
+        {
+          "options": [
+            "initiative",
+            "plan",
+            "blueprint",
+            "idea"
+          ],
+          "correct": "initiative"
+        },
+        {
+          "options": [
+            "budget",
+            "aesthetics",
+            "footprint",
+            "policies"
+          ],
+          "correct": "footprint"
+        },
+        {
+          "options": [
+            "shelves",
+            "screens",
+            "headlines",
+            "roads"
+          ],
+          "correct": "roads"
+        },
+        {
+          "options": [
+            "both",
+            "alike",
+            "similarly",
+            "politicians"
+          ],
+          "correct": "alike"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Torres was inspired by a similar model in Europe and decided to replicate it.",
+        "correct": true
+      },
+      {
+        "text": "Not everyone is impressed; some traditional cab drivers view them as a threat.",
+        "correct": false
+      },
+      {
+        "text": "The city council has proposed to ban such vehicles in the coming year.",
+        "correct": false
+      },
+      {
+        "text": "These taxis can travel up to 500 miles on a single charge.",
+        "correct": false
+      }
+    ],
+    "part2": "However, like any innovation, there are challenges. Maintenance costs for the solar panels have proven to be higher than initially anticipated. Additionally, limited sunlight during winter months affects their operational hours. Despite these hurdles, the overwhelming support from the community suggests EcoCabs are here to stay.",
+    "highlightQs": [
+      {
+        "question": "What challenges have the EcoCabs encountered?",
+        "answer": "Maintenance costs for the solar panels have proven to be higher than initially anticipated. Additionally, limited sunlight during winter months affects their operational hours."
+      },
+      {
+        "question": "What inspired Jamie Torres to launch the EcoCabs initiative?",
+        "answer": "Torres was inspired by a similar model in Europe."
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The efficiency of solar-powered vehicles in a European setting.",
+        "correct": false
+      },
+      {
+        "text": "The environmental benefits and challenges faced by New Haven’s EcoCabs.",
+        "correct": true
+      },
+      {
+        "text": "A debate between traditional taxis and new technological innovations.",
+        "correct": false
+      },
+      {
+        "text": "The economic success story of Jamie Torres.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Solar Challenges: The EcoCab Dilemma",
+        "correct": false
+      },
+      {
+        "text": "European Inspiration: New York’s Green Revolution",
+        "correct": false
+      },
+      {
+        "text": "Streets of the Future: New Haven’s EcoCabs",
+        "correct": true
+      },
+      {
+        "text": "Taxi Wars: Traditional vs. Green",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 38,
+    "topic": "Digging Up Ellington’s Past: A Colonial Surprise",
+    "part1": {
+      "template": "In a surprising turn of events, the town of Ellington announced the discovery of a {1} beneath its main square, dating back to the 18th century. Archaeologists, led by Dr. Maria Jensen, began {2} the site last week, uncovering remnants of what appears to be a {3} settlement. Local {4} believe this finding could rewrite the town’s {5}, as it provides evidence of early settlers long before the recorded establishment of Ellington. Town officials are now considering the establishment of a {6} on the site to preserve its historical significance.",
+      "blanks": [
+        {
+          "options": [
+            "volcano",
+            "cavern",
+            "subway",
+            "time capsule"
+          ],
+          "correct": "cavern"
+        },
+        {
+          "options": [
+            "excavating",
+            "exhuming",
+            "looking",
+            "dig"
+          ],
+          "correct": "excavating"
+        },
+        {
+          "options": [
+            "colonial",
+            "futuristic",
+            "agricultural",
+            "industrial"
+          ],
+          "correct": "colonial"
+        },
+        {
+          "options": [
+            "historians",
+            "shopkeepers",
+            "politicians",
+            "people"
+          ],
+          "correct": "historians"
+        },
+        {
+          "options": [
+            "boundaries",
+            "traditions",
+            "holidays",
+            "history"
+          ],
+          "correct": "history"
+        },
+        {
+          "options": [
+            "shopping mall",
+            "museum",
+            "amusement park",
+            "housing complex"
+          ],
+          "correct": "museum"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Dr. Jensen has written several books about colonial artifacts.",
+        "correct": false
+      },
+      {
+        "text": "Ellington’s annual fair was postponed due to the excavation.",
+        "correct": false
+      },
+      {
+        "text": "The artifacts will be sent to a national museum for further analysis.",
+        "correct": false
+      },
+      {
+        "text": "The town council is thrilled at the economic opportunities this discovery presents.",
+        "correct": true
+      }
+    ],
+    "part2": "With public interest surging, guided tours of the excavation site are being planned. The discovery has also attracted national media attention, highlighting the town’s newfound archaeological importance. This has provided a boost to local tourism, as history enthusiasts flock to Ellington.",
+    "highlightQs": [
+      {
+        "question": "What have experts found at the site so far?",
+        "answer": "remnants of what appears to be a colonial settlement"
+      },
+      {
+        "question": "How has the discovery impacted Ellington on a national level?",
+        "answer": "The discovery has also attracted national media attention, highlighting the town’s newfound archaeological importance."
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The life and work of Dr. Maria Jensen.",
+        "correct": false
+      },
+      {
+        "text": "The historical significance of Ellington’s recent archaeological discovery.",
+        "correct": true
+      },
+      {
+        "text": "The economics of managing archaeological sites.",
+        "correct": false
+      },
+      {
+        "text": "The decline of local tourism in small towns.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Digging Up Ellington’s Past: A Colonial Surprise",
+        "correct": true
+      },
+      {
+        "text": "Ellington: From Obscurity to National Spotlight",
+        "correct": false
+      },
+      {
+        "text": "Guided Tours: Ellington’s Newest Attraction",
+        "correct": false
+      },
+      {
+        "text": "Dr. Jensen and the Mysteries Below",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "topic": "Tech Meets Transport: The Dawn of the Self-Driving Era",
+    "part1": {
+      "template": "In a groundbreaking partnership, tech giant Cybertech and automaker DriveForce announced their collaboration on a {1} vehicle. This venture promises to combine Cybertech’s expertise in {2} intelligence with DriveForce’s long history of automotive {3}. Early test drives have showcased the vehicle’s {4} to navigate complex city terrains without human {5}. Both companies hope this innovation will reduce road {6} and revolutionize the future of transportation.",
+      "blanks": [
+        {
+          "options": [
+            "hydrogen-powered",
+            "self-driving",
+            "amphibious",
+            "manual-shift"
+          ],
+          "correct": "self-driving"
+        },
+        {
+          "options": [
+            "artificial",
+            "deep",
+            "fake",
+            "AI"
+          ],
+          "correct": "artificial"
+        },
+        {
+          "options": [
+            "marketing",
+            "design",
+            "delivery",
+            "composition"
+          ],
+          "correct": "design"
+        },
+        {
+          "options": [
+            "ability",
+            "skill",
+            "intelligence",
+            "talent"
+          ],
+          "correct": "ability"
+        },
+        {
+          "options": [
+            "headlights",
+            "intervention",
+            "gears",
+            "music"
+          ],
+          "correct": "intervention"
+        },
+        {
+          "options": [
+            "congestion",
+            "artwork",
+            "fares",
+            "entertainment"
+          ],
+          "correct": "congestion"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "The color options for the new vehicle have not been decided.",
+        "correct": false
+      },
+      {
+        "text": "The project has been criticized by bicycle enthusiasts.",
+        "correct": false
+      },
+      {
+        "text": "Safety protocols for the vehicle are still under development.",
+        "correct": true
+      },
+      {
+        "text": "Both companies are planning to expand their physical offices soon.",
+        "correct": false
+      }
+    ],
+    "part2": "Investors are showing keen interest, with stock prices for both companies seeing a significant uptick since the announcement. Furthermore, city planners are excited about the prospects of a smarter transportation grid. They believe this technology could greatly reduce urban traffic jams and contribute to a cleaner, more efficient city.",
+    "highlightQs": [
+      {
+        "question": "How have investors reacted to this collaboration announcement?",
+        "answer": "Investors are showing keen interest"
+      },
+      {
+        "question": "What potential benefit of this technology are city planners excited about?",
+        "answer": "the prospects of a smarter transportation grid"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The stock market dynamics following technological announcements.",
+        "correct": false
+      },
+      {
+        "text": "The integration of artificial intelligence in self-driving vehicles and its potential urban benefits.",
+        "correct": true
+      },
+      {
+        "text": "The history of automotive design at DriveForce.",
+        "correct": false
+      },
+      {
+        "text": "Safety concerns surrounding city traffic and how to address them.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Tech Meets Transport: The Dawn of the Self-Driving Era",
+        "correct": true
+      },
+      {
+        "text": "DriveForce: A Legacy of Automotive Excellence",
+        "correct": false
+      },
+      {
+        "text": "Investing in the Future: Tech Stocks to Watch",
+        "correct": false
+      },
+      {
+        "text": "The Road to Greener Cities: A New Transport Blueprint",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "id": 40,
+    "topic": "Art in the Age of Pandemics: The Festival’s Digital Transition",
+    "part1": {
+      "template": "In a surprise announcement, city officials confirmed that the upcoming {1} festival, a renowned cultural event in the city for over two decades, will be moving to a virtual {2}. This decision comes in response to recent {3} concerns and the ongoing global pandemic. Organizers assure attendees that the online version will still capture the essence of the event, with live music {4}, interactive workshops, and virtual {5} of local artisans’ work.",
+      "blanks": [
+        {
+          "options": [
+            "culinary",
+            "tech",
+            "art",
+            "sport"
+          ],
+          "correct": "art"
+        },
+        {
+          "options": [
+            "stadium",
+            "platform",
+            "booklet",
+            "gathering"
+          ],
+          "correct": "platform"
+        },
+        {
+          "options": [
+            "welfare",
+            "health",
+            "safety",
+            "global"
+          ],
+          "correct": "health"
+        },
+        {
+          "options": [
+            "performances",
+            "launches",
+            "auctions",
+            "debates"
+          ],
+          "correct": "performances"
+        },
+        {
+          "options": [
+            "presentation",
+            "tastings",
+            "sales",
+            "interviews"
+          ],
+          "correct": "sales"
+        }
+      ]
+    },
+    "insertOptions": [
+      {
+        "text": "Several prominent artists have expressed their disappointment in the change of format.",
+        "correct": false
+      },
+      {
+        "text": "Attendance for the physical event was expected to surpass previous records.",
+        "correct": false
+      },
+      {
+        "text": "Art enthusiasts from all over the world can now participate without travel constraints.",
+        "correct": true
+      },
+      {
+        "text": "The city’s main park will be closed to allow for virtual event preparations.",
+        "correct": false
+      }
+    ],
+    "part2": "Local businesses are also gearing up to support the event, offering special promotions for festival attendees. They hope this collaborative approach will help invigorate the local economy during these trying times.",
+    "highlightQs": [
+      {
+        "question": "What are local businesses doing in response to the virtual festival?",
+        "answer": "gearing up to support the event, offering special promotions for festival attendees"
+      },
+      {
+        "question": "Why did the officials decide to move the art festival to a virtual platform?",
+        "answer": "in response to recent health concerns and the ongoing global pandemic"
+      }
+    ],
+    "ideaOptions": [
+      {
+        "text": "The history and evolution of art festivals in the city.",
+        "correct": false
+      },
+      {
+        "text": "The move to a virtual format for a traditional art festival due to health concerns.",
+        "correct": true
+      },
+      {
+        "text": "The role of local businesses in supporting international art exhibitions.",
+        "correct": false
+      },
+      {
+        "text": "The impact of music performances on virtual event success.",
+        "correct": false
+      }
+    ],
+    "titleOptions": [
+      {
+        "text": "Art in the Age of Pandemics: The Festival’s Digital Transition",
+        "correct": true
+      },
+      {
+        "text": "Local Businesses Rally Behind City’s Art Festival",
+        "correct": false
+      },
+      {
+        "text": "Two Decades of Art: The Festival’s Historic Impact",
+        "correct": false
+      },
+      {
+        "text": "A New Dawn: Music and Workshops Take the Digital Stage",
+        "correct": false
+      }
+    ]
+  }
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const STATE = {
+  screen:'menu',        // 'menu' | 'step' | 'result'
+  qIndex:0,              // index into QUESTIONS
+  step:1,                // 1..6
+  timeLeft:8*60,
+  timerHandle:null,
+  answers:{},             // per question id -> answer data
+  results:{}              // per question id -> {score, items:[...]}
+};
+function freshAnswers(){
+  return { blanks:[], insertChoice:null, hl3:'', hl4:'', idea:null, title:null };
+}
+
+const TOTAL_STEPS = 6;
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function normText(s){
+  return (s||'').toLowerCase().replace(/[.,;:!?"']/g,'').replace(/\s+/g,' ').trim();
+}
+function overlapScore(a,b){
+  const an=normText(a), bn=normText(b);
+  if(!an || !bn) return 0;
+  if(an.includes(bn) || bn.includes(an)) return 1;
+  const aw=new Set(an.split(' ')), bw=new Set(bn.split(' '));
+  let inter=0; aw.forEach(w=>{if(bw.has(w)) inter++;});
+  const union=new Set([...aw,...bw]).size;
+  return union? inter/union : 0;
+}
+function isHighlightCorrect(userText, correctText){
+  return overlapScore(userText, correctText) >= 0.5;
+}
+function fmtTime(sec){
+  const m=Math.floor(sec/60), s=sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function el(html){
+  const t=document.createElement('template');
+  t.innerHTML=html.trim();
+  return t.content.firstElementChild;
+}
+
+/* ============================================================
+   RENDER: MENU
+   ============================================================ */
+function renderMenu(){
+  clearTimer();
+  const app=document.getElementById('app');
+  const cards = QUESTIONS.map(q=>{
+    const r = STATE.results[q.id];
+    const badge = r ? `<div class="score-badge">${Math.round(r.score)}%</div>` : '';
+    return `
+    <div class="qcard" data-qid="${q.id}">
+      ${badge}
+      <div class="qnum">${q.id}</div>
+      <h3>Question ${q.id}</h3>
+      <div style="color:var(--ink-light);font-size:14px;">${q.topic}</div>
+    </div>`;
+  }).join('');
+
+  const attempted = Object.keys(STATE.results).length;
+  const avgAll = attempted ? Math.round(Object.values(STATE.results).reduce((s,r)=>s+r.score,0)/attempted) : 0;
+
+  app.innerHTML = `
+    <div class="menu">
+      <h1>🦉 Duolingo Interactive Reading Practice Test</h1>
+      <p class="sub">เลือกโจทย์ที่ต้องการฝึก หรือเริ่มทำทั้งหมดตามลำดับ — แต่ละข้อมีเวลา 8 นาที ครบ 6 ขั้นตอน</p>
+      <div class="qgrid">${cards}</div>
+      <div class="start-all-btn">
+        <button class="btn btn-primary" id="startAllBtn">เริ่มทำทั้งหมด (Question 1 → 6)</button>
+      </div>
+      <div class="summary-box ${attempted?'show':''}" id="summaryBox">
+        <b>สรุปผลรวม:</b> ทำไปแล้ว ${attempted}/6 ข้อ &nbsp;•&nbsp; คะแนนเฉลี่ย <b>${avgAll}%</b>
+      </div>
+    </div>
+  `;
+  app.querySelectorAll('.qcard').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      const qid = parseInt(c.dataset.qid,10);
+      startQuestion(QUESTIONS.findIndex(q=>q.id===qid), false);
+    });
+  });
+  document.getElementById('startAllBtn').addEventListener('click', ()=> startQuestion(0, true));
+}
+
+let SEQUENCE_MODE = false;
+
+function startQuestion(index, sequenceMode){
+  SEQUENCE_MODE = sequenceMode;
+  STATE.qIndex = index;
+  STATE.step = 1;
+  STATE.answers[QUESTIONS[index].id] = freshAnswers();
+  STATE.timeLeft = 8*60;
+  STATE.screen='step';
+  startTimer();
+  renderStep();
+}
+
+/* ============================================================
+   TIMER
+   ============================================================ */
+function startTimer(){
+  clearTimer();
+  updateTimerUI();
+  STATE.timerHandle = setInterval(()=>{
+    STATE.timeLeft--;
+    if(STATE.timeLeft<=0){
+      STATE.timeLeft=0;
+      updateTimerUI();
+      clearTimer();
+      finishQuestion();
+      return;
+    }
+    updateTimerUI();
+  },1000);
+}
+function clearTimer(){
+  if(STATE.timerHandle){ clearInterval(STATE.timerHandle); STATE.timerHandle=null; }
+}
+function updateTimerUI(){
+  const t=document.getElementById('timerDisplay');
+  if(!t) return;
+  t.textContent = fmtTime(STATE.timeLeft);
+  t.classList.toggle('low', STATE.timeLeft<=60);
+}
+
+/* ============================================================
+   RENDER: STEP (shared topbar)
+   ============================================================ */
+function topbarHTML(){
+  const pct = Math.round((STATE.step-1)/TOTAL_STEPS*100);
+  return `
+    <div class="topbar">
+      <div class="brand"><span class="owl">🦉</span>Q${QUESTIONS[STATE.qIndex].id}</div>
+      <div class="progressbar-wrap"><div class="progressbar-fill" style="width:${pct}%"></div></div>
+      <div class="timer" id="timerDisplay">${fmtTime(STATE.timeLeft)}</div>
+    </div>
+  `;
+}
+
+function renderStep(){
+  const app=document.getElementById('app');
+  const q = QUESTIONS[STATE.qIndex];
+  let body = '';
+  if(STATE.step===1) body = stepBlanksHTML(q);
+  else if(STATE.step===2) body = stepInsertHTML(q);
+  else if(STATE.step===3) body = stepHighlightHTML(q, 3);
+  else if(STATE.step===4) body = stepHighlightHTML(q, 4);
+  else if(STATE.step===5) body = stepMCHTML(q,'idea');
+  else if(STATE.step===6) body = stepMCHTML(q,'title');
+
+  app.innerHTML = topbarHTML() + `<div class="step" id="stepBody">${body}</div>`;
+  updateTimerUI();
+  wireStep(q);
+}
+
+/* ---- STEP 1: complete the sentences (hover-preview dropdown) ---- */
+function stepBlanksHTML(q){
+  const ans = STATE.answers[q.id];
+  if(ans.blanks.length !== q.part1.blanks.length){
+    ans.blanks = q.part1.blanks.map(()=>null);
+  }
+  let idx=0;
+  const passageHTML = q.part1.template.replace(/\{(\d+)\}/g, ()=>{
+    const i = idx++;
+    const chosen = ans.blanks[i];
+    const options = q.part1.blanks[i].options.map(o=>`<div class="blank-option" data-i="${i}" data-val="${o}">${o}</div>`).join('');
+    return `<span class="blank-wrap" data-i="${i}">
+      <span class="blank-btn ${chosen?'filled':''}" data-i="${i}">${chosen ? chosen : '_____'}</span>
+      <div class="blank-dropdown" data-i="${i}">${options}</div>
+    </span>`;
+  });
+  return `
+    <div class="step-kicker">Step 1 of 6</div>
+    <h2 class="step-title">Complete the Sentences</h2>
+    <div class="instructions">คลิกที่ช่องว่างเพื่อเลือกคำตอบ — ลองเอาเมาส์ไปชี้ตัวเลือกก่อน คำตอบจะพรีวิวในช่องว่างทันที</div>
+    <div class="passage">${passageHTML}</div>
+    <div class="action-bar">
+      <button class="btn btn-primary" id="nextBtn">ถัดไป</button>
+    </div>
+  `;
+}
+
+/* ---- STEP 2: complete the passage (insert sentence) ---- */
+function stepInsertHTML(q){
+  const ans = STATE.answers[q.id];
+  let idx=0;
+  const filledPart1 = q.part1.template.replace(/\{(\d+)\}/g, ()=>{
+    const i=idx++;
+    return `<b>${ans.blanks[i] || q.part1.blanks[i].correct}</b>`;
+  });
+  const choices = q.insertOptions.map((o,i)=>`
+    <div class="choice ${ans.insertChoice===i?'selected':''}" data-i="${i}">${o.text}</div>
+  `).join('');
+  return `
+    <div class="step-kicker">Step 2 of 6</div>
+    <h2 class="step-title">Complete the Passage</h2>
+    <div class="instructions">เลือกประโยคที่เหมาะสมที่สุดเพื่อแทรกระหว่างสองย่อหน้า</div>
+    <div class="split-passage">
+      <div class="p1">${filledPart1}</div>
+      <div class="insert-slot" id="insertSlot">[ เลือกประโยคที่จะแทรกตรงนี้ ]</div>
+      <div class="p2">${q.part2}</div>
+    </div>
+    <div class="choice-list">${choices}</div>
+    <div class="action-bar">
+      <button class="btn btn-primary" id="nextBtn" ${ans.insertChoice===null?'disabled':''}>ถัดไป</button>
+    </div>
+  `;
+}
+
+/* ---- STEP 3 & 4: highlight the answer ---- */
+function fullPassageText(q, ans){
+  let idx=0;
+  const p1 = q.part1.template.replace(/\{(\d+)\}/g, ()=>{
+    const i=idx++;
+    return (ans.blanks[i] || q.part1.blanks[i].correct);
+  });
+  const insertText = q.insertOptions[ans.insertChoice!==null?ans.insertChoice:q.insertOptions.findIndex(o=>o.correct)].text;
+  return p1 + ' ' + insertText + ' ' + q.part2;
+}
+function stepHighlightHTML(q, stepNum){
+  const ans = STATE.answers[q.id];
+  const which = stepNum===3 ? 'hl3' : 'hl4';
+  const qObj = q.highlightQs[stepNum===3?0:1];
+  const passage = fullPassageText(q, ans);
+  const current = ans[which];
+  return `
+    <div class="step-kicker">Step ${stepNum} of 6</div>
+    <h2 class="step-title">Highlight the Answer</h2>
+    <div class="instructions"><b>คำถาม:</b> ${qObj.question}<br>ใช้เมาส์ลากคลุมข้อความในบทความด้านล่างเพื่อเลือกคำตอบ</div>
+    <div class="passage selectable" id="hlPassage" data-which="${which}">${passage}</div>
+    <div style="margin-top:14px;font-size:14px;color:var(--ink-light);" id="hlStatus">
+      ${current ? `คุณเลือกไว้: <b>"${current}"</b>` : 'ยังไม่ได้เลือกข้อความ'}
+    </div>
+    <div class="action-bar">
+      <button class="btn btn-primary" id="nextBtn" ${current?'':'disabled'}>ถัดไป</button>
+    </div>
+  `;
+}
+
+/* ---- STEP 5 & 6: multiple choice ---- */
+function stepMCHTML(q, kind){
+  const ans = STATE.answers[q.id];
+  const isIdea = kind==='idea';
+  const opts = isIdea ? q.ideaOptions : q.titleOptions;
+  const selected = isIdea ? ans.idea : ans.title;
+  const passage = fullPassageText(q, ans);
+  const choices = opts.map((o,i)=>`<div class="choice ${selected===i?'selected':''}" data-i="${i}">${o.text}</div>`).join('');
+  return `
+    <div class="step-kicker">Step ${isIdea?5:6} of 6</div>
+    <h2 class="step-title">${isIdea?'Identify the Main Idea':'Title the Passage'}</h2>
+    <div class="instructions">${isIdea?'อ่านบทความแล้วเลือกใจความสำคัญที่ถูกต้องที่สุด':'เลือกชื่อเรื่องที่เหมาะสมที่สุดสำหรับบทความนี้'}</div>
+    <div class="passage" style="max-height:220px;overflow:auto;">${passage}</div>
+    <div class="choice-list">${choices}</div>
+    <div class="action-bar">
+      <button class="btn btn-primary" id="nextBtn" ${selected===null||selected===undefined?'disabled':''}>${isIdea?'ถัดไป':'ส่งคำตอบ'}</button>
+    </div>
+  `;
+}
+
+/* ============================================================
+   WIRE UP INTERACTIONS
+   ============================================================ */
+function wireStep(q){
+  const ans = STATE.answers[q.id];
+  const nextBtn = document.getElementById('nextBtn');
+
+  if(STATE.step===1){
+    document.querySelectorAll('.blank-btn').forEach(btn=>{
+      btn.addEventListener('click',(e)=>{
+        e.stopPropagation();
+        document.querySelectorAll('.blank-dropdown').forEach(d=>d.classList.remove('open'));
+        const i=btn.dataset.i;
+        document.querySelector(`.blank-dropdown[data-i="${i}"]`).classList.add('open');
+      });
+    });
+    document.querySelectorAll('.blank-option').forEach(opt=>{
+      opt.addEventListener('mouseenter',()=>{
+        const i=opt.dataset.i, val=opt.dataset.val;
+        const btn=document.querySelector(`.blank-btn[data-i="${i}"]`);
+        btn.textContent = val;
+        btn.classList.add('preview');
+      });
+      opt.addEventListener('mouseleave',()=>{
+        const i=opt.dataset.i;
+        const btn=document.querySelector(`.blank-btn[data-i="${i}"]`);
+        if(!ans.blanks[i]){ btn.textContent='_____'; }
+        else { btn.textContent = ans.blanks[i]; }
+        btn.classList.remove('preview');
+      });
+      opt.addEventListener('click',(e)=>{
+        e.stopPropagation();
+        const i=parseInt(opt.dataset.i,10), val=opt.dataset.val;
+        ans.blanks[i]=val;
+        const btn=document.querySelector(`.blank-btn[data-i="${i}"]`);
+        btn.textContent=val; btn.classList.remove('preview'); btn.classList.add('filled');
+        document.querySelector(`.blank-dropdown[data-i="${i}"]`).classList.remove('open');
+      });
+    });
+    document.addEventListener('click', closeDropdowns);
+    nextBtn.addEventListener('click', ()=>goNextStep());
+  }
+
+  if(STATE.step===2){
+    document.querySelectorAll('.choice').forEach(c=>{
+      c.addEventListener('click',()=>{
+        const i=parseInt(c.dataset.i,10);
+        ans.insertChoice=i;
+        document.querySelectorAll('.choice').forEach(x=>x.classList.remove('selected'));
+        c.classList.add('selected');
+        document.getElementById('insertSlot').textContent = q.insertOptions[i].text;
+        document.getElementById('nextBtn').disabled=false;
+      });
+    });
+    if(ans.insertChoice!==null){
+      document.getElementById('insertSlot').textContent = q.insertOptions[ans.insertChoice].text;
+    }
+    nextBtn.addEventListener('click', ()=>goNextStep());
+  }
+
+  if(STATE.step===3 || STATE.step===4){
+    const passageEl = document.getElementById('hlPassage');
+    const which = passageEl.dataset.which;
+    passageEl.addEventListener('mouseup', ()=>{
+      const sel = window.getSelection();
+      const text = sel.toString().trim();
+      if(text.length>0 && passageEl.contains(sel.anchorNode)){
+        ans[which]=text;
+        try{
+          const range = sel.getRangeAt(0);
+          const span = document.createElement('span');
+          span.className='hl-user';
+          range.surroundContents(span);
+        }catch(e){ /* selection spans multiple nodes - ignore visual wrap */ }
+        sel.removeAllRanges();
+        const statusEl = document.getElementById('hlStatus');
+        if(statusEl) statusEl.innerHTML = `คุณเลือกไว้: <b>"${text}"</b>`;
+        document.getElementById('nextBtn').disabled=false;
+      }
+    });
+    nextBtn.addEventListener('click', ()=>goNextStep());
+  }
+
+  if(STATE.step===5 || STATE.step===6){
+    const isIdea = STATE.step===5;
+    document.querySelectorAll('.choice').forEach(c=>{
+      c.addEventListener('click',()=>{
+        const i=parseInt(c.dataset.i,10);
+        if(isIdea) ans.idea=i; else ans.title=i;
+        document.querySelectorAll('.choice').forEach(x=>x.classList.remove('selected'));
+        c.classList.add('selected');
+        document.getElementById('nextBtn').disabled=false;
+      });
+    });
+    nextBtn.addEventListener('click', ()=>{
+      if(STATE.step===6){ finishQuestion(); }
+      else { goNextStep(); }
+    });
+  }
+}
+function closeDropdowns(){
+  document.querySelectorAll('.blank-dropdown').forEach(d=>d.classList.remove('open'));
+  document.removeEventListener('click', closeDropdowns);
+}
+
+function goNextStep(){
+  if(STATE.step < TOTAL_STEPS){
+    STATE.step++;
+    renderStep();
+  }
+}
+
+/* ============================================================
+   SCORING & RESULTS
+   ============================================================ */
+function scoreQuestion(q, ans){
+  const items=[];
+  q.part1.blanks.forEach((b,i)=>{
+    const user = ans.blanks[i];
+    items.push({
+      label:`Step 1 · ช่องว่างที่ ${i+1}`,
+      correct: user===b.correct,
+      userAnswer: user || '(ไม่ได้ตอบ)',
+      correctAnswer: b.correct
+    });
+  });
+  const insertCorrectIdx = q.insertOptions.findIndex(o=>o.correct);
+  items.push({
+    label:'Step 2 · ประโยคที่แทรก',
+    correct: ans.insertChoice===insertCorrectIdx,
+    userAnswer: ans.insertChoice!==null ? q.insertOptions[ans.insertChoice].text : '(ไม่ได้ตอบ)',
+    correctAnswer: q.insertOptions[insertCorrectIdx].text
+  });
+  [ ['hl3',0,'Step 3'], ['hl4',1,'Step 4'] ].forEach(([key,qi,label])=>{
+    const user = ans[key];
+    items.push({
+      label:`${label} · ${q.highlightQs[qi].question}`,
+      correct: user ? isHighlightCorrect(user, q.highlightQs[qi].answer) : false,
+      userAnswer: user || '(ไม่ได้เลือกข้อความ)',
+      correctAnswer: q.highlightQs[qi].answer
+    });
+  });
+  const ideaCorrectIdx = q.ideaOptions.findIndex(o=>o.correct);
+  items.push({
+    label:'Step 5 · Main Idea',
+    correct: ans.idea===ideaCorrectIdx,
+    userAnswer: ans.idea!==null && ans.idea!==undefined ? q.ideaOptions[ans.idea].text : '(ไม่ได้ตอบ)',
+    correctAnswer: q.ideaOptions[ideaCorrectIdx].text
+  });
+  const titleCorrectIdx = q.titleOptions.findIndex(o=>o.correct);
+  items.push({
+    label:'Step 6 · Title',
+    correct: ans.title===titleCorrectIdx,
+    userAnswer: ans.title!==null && ans.title!==undefined ? q.titleOptions[ans.title].text : '(ไม่ได้ตอบ)',
+    correctAnswer: q.titleOptions[titleCorrectIdx].text
+  });
+  const correctCount = items.filter(i=>i.correct).length;
+  const score = (correctCount/items.length)*100;
+  return {score, items};
+}
+
+function finishQuestion(){
+  clearTimer();
+  const q = QUESTIONS[STATE.qIndex];
+  const ans = STATE.answers[q.id];
+  const result = scoreQuestion(q, ans);
+  STATE.results[q.id] = result;
+  STATE.screen='result';
+  renderResult();
+}
+
+function renderResult(){
+  const app=document.getElementById('app');
+  const q = QUESTIONS[STATE.qIndex];
+  const r = STATE.results[q.id];
+  const roundedScore = Math.round(r.score);
+
+  const itemsHTML = r.items.map(it=>`
+    <div class="review-item ${it.correct?'ok':'bad'}">
+      <div class="tag">${it.correct?'ถูกต้อง':'ไม่ถูกต้อง'}</div>
+      <div class="q">${it.label}</div>
+      <div class="ans">คำตอบของคุณ: <b>${it.userAnswer}</b></div>
+      ${it.correct?'':`<div class="ans">เฉลย: <b>${it.correctAnswer}</b></div>`}
+    </div>
+  `).join('');
+
+  const hasNext = SEQUENCE_MODE && STATE.qIndex < QUESTIONS.length-1;
+  const isLastOfAll = SEQUENCE_MODE && STATE.qIndex === QUESTIONS.length-1;
+
+  app.innerHTML = `
+    <div class="result">
+      <div class="result-hero">
+        <div class="score">${roundedScore}%</div>
+        <div class="label">คะแนนเฉลี่ย · Question ${q.id}: ${q.topic}</div>
+      </div>
+      <h3>เฉลยอย่างละเอียด</h3>
+      ${itemsHTML}
+      <div class="result-actions">
+        ${hasNext ? `<button class="btn btn-primary" id="nextQBtn">ทำข้อถัดไป (Question ${QUESTIONS[STATE.qIndex+1].id}) →</button>` : ''}
+        ${isLastOfAll ? `<button class="btn btn-primary" id="overallBtn">ดูสรุปผลรวมทั้งหมด</button>` : ''}
+        <button class="btn btn-outline" id="backMenuBtn">กลับเมนูหลัก</button>
+      </div>
+    </div>
+  `;
+  const nextQBtn = document.getElementById('nextQBtn');
+  if(nextQBtn) nextQBtn.addEventListener('click', ()=> startQuestion(STATE.qIndex+1, true));
+  const overallBtn = document.getElementById('overallBtn');
+  if(overallBtn) overallBtn.addEventListener('click', renderOverallSummary);
+  document.getElementById('backMenuBtn').addEventListener('click', ()=>{ STATE.screen='menu'; renderMenu(); });
+}
+
+function renderOverallSummary(){
+  const app=document.getElementById('app');
+  const attempted = Object.keys(STATE.results);
+  const avg = Math.round(attempted.reduce((s,id)=>s+STATE.results[id].score,0)/attempted.length);
+  const rows = QUESTIONS.map(q=>{
+    const r = STATE.results[q.id];
+    return `<div class="review-item ${r && r.score>=60?'ok':'bad'}">
+      <div class="q">Question ${q.id}: ${q.topic}</div>
+      <div class="ans">คะแนน: <b>${r?Math.round(r.score):0}%</b></div>
+    </div>`;
+  }).join('');
+  app.innerHTML = `
+    <div class="result">
+      <div class="result-hero">
+        <div class="score">${avg}%</div>
+        <div class="label">คะแนนเฉลี่ยรวมทั้ง 6 ข้อ</div>
+      </div>
+      ${rows}
+      <div class="result-actions">
+        <button class="btn btn-primary" id="backMenuBtn2">กลับเมนูหลัก</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('backMenuBtn2').addEventListener('click', ()=>{ STATE.screen='menu'; renderMenu(); });
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderMenu();
+</script>
+</body>
+</html>
