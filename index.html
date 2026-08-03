@@ -5378,13 +5378,14 @@ function stepBlanksHTML(q){
       <div class="blank-dropdown" data-i="${i}">${options}</div>
     </span>`;
   });
+  const allFilled = ans.blanks.every(b=>!!b);
   return `
     <div class="step-kicker">Step 1 of 6</div>
     <h2 class="step-title">Complete the Sentences</h2>
-    <div class="instructions">คลิกที่ช่องว่างเพื่อเลือกคำตอบ — ลองเอาเมาส์ไปชี้ตัวเลือกก่อน คำตอบจะพรีวิวในช่องว่างทันที</div>
+    <div class="instructions">คลิกที่ช่องว่างเพื่อเลือกคำตอบ — ลองเอาเมาส์ไปชี้ตัวเลือกก่อน คำตอบจะพรีวิวในช่องว่างทันที ต้องตอบให้ครบทุกช่องก่อนจึงจะไปขั้นตอนถัดไปได้</div>
     <div class="passage">${passageHTML}</div>
     <div class="action-bar">
-      <button class="btn btn-primary" id="nextBtn">ถัดไป</button>
+      <button class="btn btn-primary" id="nextBtn" ${allFilled?'':'disabled'}>ถัดไป</button>
     </div>
   `;
 }
@@ -5395,7 +5396,7 @@ function stepInsertHTML(q){
   let idx=0;
   const filledPart1 = q.part1.template.replace(/\{(\d+)\}/g, ()=>{
     const i=idx++;
-    return `<b>${ans.blanks[i] || q.part1.blanks[i].correct}</b>`;
+    return `<b>${q.part1.blanks[i].correct}</b>`;
   });
   const choices = q.insertOptions.map((o,i)=>`
     <div class="choice ${ans.insertChoice===i?'selected':''}" data-i="${i}">${o.text}</div>
@@ -5411,7 +5412,6 @@ function stepInsertHTML(q){
     </div>
     <div class="choice-list">${choices}</div>
     <div class="action-bar">
-      <button class="btn btn-ghost" id="backBtn">← ย้อนกลับ</button>
       <button class="btn btn-primary" id="nextBtn" ${ans.insertChoice===null?'disabled':''}>ถัดไป</button>
     </div>
   `;
@@ -5422,7 +5422,7 @@ function fullPassageText(q, ans){
   let idx=0;
   const p1 = q.part1.template.replace(/\{(\d+)\}/g, ()=>{
     const i=idx++;
-    return (ans.blanks[i] || q.part1.blanks[i].correct);
+    return q.part1.blanks[i].correct;
   });
   const insertText = q.insertOptions[ans.insertChoice!==null?ans.insertChoice:q.insertOptions.findIndex(o=>o.correct)].text;
   return p1 + ' ' + insertText + ' ' + q.part2;
@@ -5442,7 +5442,6 @@ function stepHighlightHTML(q, stepNum){
       ${current ? `คุณเลือกไว้: <b>"${current}"</b>` : 'ยังไม่ได้เลือกข้อความ'}
     </div>
     <div class="action-bar">
-      <button class="btn btn-ghost" id="backBtn">← ย้อนกลับ</button>
       <button class="btn btn-primary" id="nextBtn" ${current?'':'disabled'}>ถัดไป</button>
     </div>
   `;
@@ -5463,7 +5462,6 @@ function stepMCHTML(q, kind){
     <div class="passage" style="max-height:220px;overflow:auto;">${passage}</div>
     <div class="choice-list">${choices}</div>
     <div class="action-bar">
-      <button class="btn btn-ghost" id="backBtn">← ย้อนกลับ</button>
       <button class="btn btn-primary" id="nextBtn" ${selected===null||selected===undefined?'disabled':''}>${isIdea?'ถัดไป':'ส่งคำตอบ'}</button>
     </div>
   `;
@@ -5475,12 +5473,12 @@ function stepMCHTML(q, kind){
 function wireStep(q){
   const ans = STATE.answers[q.id];
   const nextBtn = document.getElementById('nextBtn');
-  const backBtn = document.getElementById('backBtn');
-  if(backBtn){
-    backBtn.addEventListener('click', ()=>goPrevStep());
-  }
 
   if(STATE.step===1){
+    function refreshNextState(){
+      const allFilled = ans.blanks.every(b=>!!b);
+      nextBtn.disabled = !allFilled;
+    }
     document.querySelectorAll('.blank-btn').forEach(btn=>{
       btn.addEventListener('click',(e)=>{
         e.stopPropagation();
@@ -5510,10 +5508,12 @@ function wireStep(q){
         const btn=document.querySelector(`.blank-btn[data-i="${i}"]`);
         btn.textContent=val; btn.classList.remove('preview'); btn.classList.add('filled');
         document.querySelector(`.blank-dropdown[data-i="${i}"]`).classList.remove('open');
+        refreshNextState();
       });
     });
     document.addEventListener('click', closeDropdowns);
-    nextBtn.addEventListener('click', ()=>goNextStep());
+    refreshNextState();
+    nextBtn.addEventListener('click', ()=>{ if(!nextBtn.disabled) goNextStep(); });
   }
 
   if(STATE.step===2){
@@ -5530,7 +5530,7 @@ function wireStep(q){
     if(ans.insertChoice!==null){
       document.getElementById('insertSlot').textContent = q.insertOptions[ans.insertChoice].text;
     }
-    nextBtn.addEventListener('click', ()=>goNextStep());
+    nextBtn.addEventListener('click', ()=>{ if(!nextBtn.disabled) goNextStep(); });
   }
 
   if(STATE.step===3 || STATE.step===4){
@@ -5553,7 +5553,7 @@ function wireStep(q){
         document.getElementById('nextBtn').disabled=false;
       }
     });
-    nextBtn.addEventListener('click', ()=>goNextStep());
+    nextBtn.addEventListener('click', ()=>{ if(!nextBtn.disabled) goNextStep(); });
   }
 
   if(STATE.step===5 || STATE.step===6){
@@ -5568,6 +5568,7 @@ function wireStep(q){
       });
     });
     nextBtn.addEventListener('click', ()=>{
+      if(nextBtn.disabled) return;
       if(STATE.step===6){ finishQuestion(); }
       else { goNextStep(); }
     });
@@ -5581,12 +5582,6 @@ function closeDropdowns(){
 function goNextStep(){
   if(STATE.step < TOTAL_STEPS){
     STATE.step++;
-    renderStep();
-  }
-}
-function goPrevStep(){
-  if(STATE.step > 1){
-    STATE.step--;
     renderStep();
   }
 }
